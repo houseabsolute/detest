@@ -267,6 +267,9 @@ func (r result) describe(name string) string {
 	if showExpect {
 		lastBodyRow = append(lastBodyRow, eType, expect)
 	}
+	if len(r.path) != 0 {
+		lastBodyRow = append(lastBodyRow, "")
+	}
 
 	body := [][]interface{}{}
 	for _, p := range r.path {
@@ -274,7 +277,7 @@ func (r result) describe(name string) string {
 			body,
 			[]interface{}{
 				p.data,
-				cell.NewWithParams("", len(lastBodyRow)-1, cell.AlignLeft),
+				cell.NewWithParams("", len(lastBodyRow)-2, cell.AlignLeft),
 				pathSummary(p),
 			},
 		)
@@ -321,7 +324,7 @@ func addHeaders(t *table.Table, r result) {
 			first,
 			cell.NewWithParams("ACTUAL", 2, cell.AlignCenter),
 		)
-		if r.expect != nil {
+		if r.op != "" {
 			first = append(first, cell.NewWithParams("", 1, cell.AlignCenter))
 		}
 	}

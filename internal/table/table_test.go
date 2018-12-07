@@ -51,6 +51,41 @@ var tests = []testCase{
 `,
 		name: "three cell table",
 	},
+	{
+		body: []testRow{{
+			{content: ""},
+			{content: ""},
+			{content: ""},
+		}},
+		expect: `
+┍━━┯━━┯━━┑
+│  │  │  │
+┕━━┷━━┷━━┙
+`,
+		name: "three empty cell table",
+	},
+	{
+		body: []testRow{
+			{
+				{content: "foo"},
+				{content: ""},
+				{content: "bar"},
+			},
+			{
+				{content: ""},
+				{content: "buz"},
+				{content: ""},
+			},
+		},
+		expect: `
+┍━━━━━┯━━━━━┯━━━━━┑
+│ foo │     │ bar │
+├╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│     │ buz │     │
+┕━━━━━┷━━━━━┷━━━━━┙
+`,
+		name: "mix of empty and populated cells between rows",
+	},
 }
 
 func TestRender(t *testing.T) {
