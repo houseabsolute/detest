@@ -9,6 +9,18 @@ type ExactEqualityComparer struct {
 	expect interface{}
 }
 
+func (d *D) Is(actual, expect interface{}, name string) bool {
+	d.ResetState(actual)
+	defer d.PopActual()
+
+	if c, ok := expect.(Comparer); ok {
+		c.Compare(d)
+	} else {
+		d.Equal(expect).Compare(d)
+	}
+	return d.ok(name)
+}
+
 func (d *D) Equal(expect interface{}) ExactEqualityComparer {
 	return ExactEqualityComparer{expect}
 }
@@ -60,6 +72,14 @@ func (eec ExactEqualityComparer) Compare(d *D) {
 
 type ValueEqualityComparer struct {
 	expect interface{}
+}
+
+func (d *D) ValueIs(actual, expect interface{}, name string) bool {
+	d.ResetState(actual)
+	defer d.PopActual()
+
+	d.ValueEqual(expect).Compare(d)
+	return d.ok(name)
 }
 
 func (d *D) ValueEqual(expect interface{}) ValueEqualityComparer {

@@ -84,26 +84,6 @@ func packageFromFrame(frame runtime.Frame) string {
 	return s[0]
 }
 
-func (d *D) Is(actual, expect interface{}, name string) bool {
-	d.ResetState(actual)
-	defer d.PopActual()
-
-	if c, ok := expect.(Comparer); ok {
-		c.Compare(d)
-	} else {
-		d.Equal(expect).Compare(d)
-	}
-	return d.ok(name)
-}
-
-func (d *D) ValueIs(actual, expect interface{}, name string) bool {
-	d.ResetState(actual)
-	defer d.PopActual()
-
-	d.ValueEqual(expect).Compare(d)
-	return d.ok(name)
-}
-
 func (d *D) ResetState(actual interface{}) {
 	d.state = &state{}
 	d.PushActual(actual)
