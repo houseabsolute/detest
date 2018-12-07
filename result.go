@@ -23,7 +23,7 @@ type result struct {
 	expect      *value
 	op          string
 	pass        bool
-	path        []path
+	path        []Path
 	where       failure
 	description string
 }
@@ -67,7 +67,7 @@ func (d describer) table() string {
 			[]interface{}{
 				p.data,
 				cell.NewWithParams("", len(lastBodyRow)-2, cell.AlignLeft),
-				d.pathSummary(p),
+				p.CalledAt(),
 			},
 		)
 	}
@@ -85,7 +85,7 @@ func (d describer) table() string {
 			span += 2
 		}
 		if d.r.op != "" {
-			span += 1
+			span++
 		}
 		if d.r.showExpect() {
 			span += 2
@@ -188,7 +188,6 @@ func (d describer) lastBodyRow() []interface{} {
 		lastBodyRow = append(lastBodyRow, "")
 	}
 	if d.r.showActual() {
-		aType := d.r.actual.description()
 		lastBodyRow = append(lastBodyRow, aType, actual)
 	}
 	if op != "" {
@@ -202,10 +201,6 @@ func (d describer) lastBodyRow() []interface{} {
 	}
 
 	return lastBodyRow
-}
-
-func (d describer) pathSummary(p path) string {
-	return fmt.Sprintf("%s called %s", p.at, p.caller)
 }
 
 func (v *value) description() string {

@@ -5,14 +5,20 @@ import (
 	"reflect"
 )
 
+// SliceComparer implements comparison of slice values.
 type SliceComparer struct {
 	with func(*D)
 }
 
+// Slice takes a function which will be called to do further comparisons of
+// the slice's contents.
 func (d *D) Slice(with func(*D)) SliceComparer {
 	return SliceComparer{with}
 }
 
+// Compare compares the slice value in d.Actual() by calling the function
+// passed to `Slice()`, which is in turn expected to further tests of the
+// slice's content.
 func (sc SliceComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 	if v.Kind() != reflect.Slice {
@@ -26,16 +32,18 @@ func (sc SliceComparer) Compare(d *D) {
 		return
 	}
 
-	d.PushPath(d.makePath(describeType(v.Type()), 1, "detest.(*D).Slice"))
+	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Slice"))
 	defer d.PopPath()
 
 	sc.with(d)
 }
 
+// Idx takes a slice index and an expected value for that index. If the index
+// is past the end of the array, this is considered a failure.
 func (d *D) Idx(idx int, expect interface{}) {
 	v := reflect.ValueOf(d.Actual())
 
-	d.PushPath(d.makePath(fmt.Sprintf("[%d]", idx), 0, ""))
+	d.PushPath(d.NewPath(fmt.Sprintf("[%d]", idx), 0, ""))
 	defer d.PopPath()
 
 	if idx >= v.Len() {
@@ -59,8 +67,12 @@ func (d *D) Idx(idx int, expect interface{}) {
 	}
 }
 
+// AllSliceValues takes a function and turns it into a `FuncComparer`. It then
+// passes every slice value to that comparer in turn. The function must take
+// exactly one value matching the slice values' type and return a single boolean
+// value.
 func (d *D) AllSliceValues(check interface{}) {
-	d.PushPath(d.makePath("{...}", 0, ""))
+	d.PushPath(d.NewPath("{...}", 0, ""))
 	defer d.PopPath()
 
 	v := reflect.ValueOf(check)

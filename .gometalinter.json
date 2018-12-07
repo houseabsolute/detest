@@ -1,0 +1,17 @@
+{
+    "vendor": true,
+    "sort": [
+        "path"
+    ],
+    "deadline": "60s",
+    "enable": [
+        "deadcode",
+        "errcheck",
+        "gofmt",
+        "golint",
+        "megacheck",
+        "misspell",
+        "structcheck",
+        "vet"
+    ]
+}
