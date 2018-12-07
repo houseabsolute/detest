@@ -109,3 +109,46 @@ func Test7(t *testing.T) {
 		"AllMapValues",
 	)
 }
+
+func Test8(t *testing.T) {
+	d := detest.New(t)
+	actual := map[string][]map[string][]string{
+		"foo": {
+			{
+				"bar": {"baz", "buz", "quux"},
+				"x":   {"y", "z"},
+			},
+			{
+				"mar":   {"maz", "muz"},
+				"Blort": {"42"},
+			},
+		},
+		"bar": {},
+		"baz": {
+			{
+				"buz": {"quux"},
+			},
+		},
+	}
+
+	d.Is(
+		actual,
+		d.Map(func(d *detest.D) {
+			d.Key("foo", d.Slice(func(d *detest.D) {
+				d.Idx(0, d.Map(func(d *detest.D) {
+					d.Key("bar", d.Slice(func(d *detest.D) {
+						d.Idx(1, "buz")
+						d.Idx(2, "not quux")
+					}))
+				}))
+				d.Idx(1, d.Map(func(d *detest.D) {
+					d.Key("nosuchkey", d.Slice(func(d *detest.D) {
+						d.Idx(1, "buz")
+						d.Idx(2, "not quux")
+					}))
+				}))
+			}))
+		}),
+		"map of slice of map of slice",
+	)
+}
