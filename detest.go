@@ -55,12 +55,13 @@ type Comparer interface {
 }
 
 type D struct {
-	t           *testing.T
-	state       *state
-	ourPackages map[string]bool
+	t     *testing.T
+	state *state
 }
 
-func New(t *testing.T) *D {
+var ourPackages = map[string]bool{}
+
+func init() {
 	pc := make([]uintptr, 1)
 	n := runtime.Callers(1, pc)
 	if n == 0 {
@@ -70,10 +71,7 @@ func New(t *testing.T) *D {
 	frame, _ := frames.Next()
 	pkg := packageFromFrame(frame)
 
-	return &D{
-		t:           t,
-		ourPackages: map[string]bool{pkg: true},
-	}
+	ourPackages[pkg] = true
 }
 
 func packageFromFrame(frame runtime.Frame) string {
@@ -82,6 +80,10 @@ func packageFromFrame(frame runtime.Frame) string {
 		return ""
 	}
 	return s[0]
+}
+
+func New(t *testing.T) *D {
+	return &D{t: t}
 }
 
 func (d *D) ResetState(actual interface{}) {
@@ -131,7 +133,7 @@ func (d *D) makePath(data string, skip int, function string) path {
 	frame, _ = frames.Next()
 
 	var at string
-	if d.ourPackages[packageFromFrame(frame)] {
+	if ourPackages[packageFromFrame(frame)] {
 		at = callerRE.ReplaceAllLiteralString(frame.Function, "")
 	} else {
 		wd, err := os.Getwd()
