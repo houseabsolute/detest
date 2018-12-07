@@ -114,7 +114,9 @@ func (d *D) AllMapValues(check interface{}) {
 			pass:  false,
 			where: inUsage,
 			description: fmt.Sprintf(
-				"The function passed to AllValues must return a boolean, but yours returns %d", describeType(t.Out(0))),
+				"The function passed to AllValues must return a boolean, but yours returns %s",
+				articleize(describeType(t.Out(0))),
+			),
 		})
 		return
 	}
