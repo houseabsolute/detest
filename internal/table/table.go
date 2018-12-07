@@ -163,12 +163,3 @@ func (t *Table) allRows() []*row.Row {
 	rows = append(rows, t.footer...)
 	return rows
 }
-
-// ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
-// │      Failed test: 1 == 0         │
-// ┝━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┥
-// │    ACTUAL    │    │    EXPECT    │
-// │ TYPE │ VALUE │ OP │ TYPE │ VALUE │
-// ┝━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┥
-// │ int  │ 1     │ == │ int  │ 0     │
-// ┝━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┥
