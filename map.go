@@ -17,7 +17,7 @@ func (sc MapComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 	if v.Kind() != reflect.Map {
 		d.AddResult(result{
-			actual:      &value{d.Actual()},
+			actual:      newValue(d.Actual()),
 			pass:        false,
 			where:       inDataStructure,
 			op:          "[]",
@@ -41,7 +41,7 @@ func (d *D) Key(key interface{}, expect interface{}) {
 	kv := reflect.ValueOf(key)
 	if kv.Type() != v.Type().Key() {
 		d.AddResult(result{
-			actual: &value{d.Actual()},
+			actual: newValue(d.Actual()),
 			pass:   false,
 			where:  inDataStructure,
 			op:     fmt.Sprintf("[%s]", key),
@@ -57,7 +57,7 @@ func (d *D) Key(key interface{}, expect interface{}) {
 	found := v.MapIndex(kv)
 	if !found.IsValid() {
 		d.AddResult(result{
-			actual:      &value{d.Actual()},
+			actual:      newValue(d.Actual()),
 			pass:        false,
 			where:       inDataStructure,
 			op:          fmt.Sprintf("[%s]", key),

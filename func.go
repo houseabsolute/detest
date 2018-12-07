@@ -31,7 +31,7 @@ func (fc FuncComparer) Compare(d *D) {
 	}
 
 	d.AddResult(result{
-		actual: &value{d.Actual()},
+		actual: newValue(d.Actual()),
 		pass:   false,
 		where:  inValue,
 		op:     "func()",

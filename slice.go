@@ -17,7 +17,7 @@ func (sc SliceComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 	if v.Kind() != reflect.Slice {
 		d.AddResult(result{
-			actual:      &value{d.Actual()},
+			actual:      newValue(d.Actual()),
 			pass:        false,
 			where:       inDataStructure,
 			op:          "[]",
@@ -40,7 +40,7 @@ func (d *D) Idx(idx int, expect interface{}) {
 
 	if idx >= v.Len() {
 		d.AddResult(result{
-			actual:      &value{d.Actual()},
+			actual:      newValue(d.Actual()),
 			pass:        false,
 			where:       inDataStructure,
 			op:          fmt.Sprintf("[%d]", idx),

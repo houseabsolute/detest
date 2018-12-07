@@ -32,8 +32,8 @@ func (eec ExactEqualityComparer) Compare(d *D) {
 	actual := d.Actual()
 	expect := eec.expect
 	result := result{
-		actual: &value{actual},
-		expect: &value{expect},
+		actual: newValue(actual),
+		expect: newValue(expect),
 		op:     "==",
 	}
 	if actual == nil || expect == nil {
@@ -93,8 +93,8 @@ func (vec ValueEqualityComparer) Compare(d *D) {
 	actual := d.Actual()
 	expect := vec.expect
 	result := result{
-		actual: &value{actual},
-		expect: &value{expect},
+		actual: newValue(actual),
+		expect: newValue(expect),
 		op:     "== (value)",
 	}
 	if actual == nil || expect == nil {

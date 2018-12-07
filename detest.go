@@ -3,16 +3,12 @@ package detest
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/houseabsolute/detest/internal/ansi"
-	"github.com/houseabsolute/detest/internal/table"
-	"github.com/houseabsolute/detest/internal/table/cell"
-	"github.com/houseabsolute/detest/internal/table/style"
 )
 
 type failure int
@@ -23,20 +19,6 @@ const (
 	inDataStructure
 	inUsage
 )
-
-type value struct {
-	value interface{}
-}
-
-type result struct {
-	actual      *value
-	expect      *value
-	op          string
-	pass        bool
-	path        []path
-	where       failure
-	description string
-}
 
 type path struct {
 	data   string
@@ -184,249 +166,11 @@ func (d *D) ok(name string) bool {
 		} else {
 			pass = false
 			d.t.Fail()
-			os.Stdout.WriteString(r.describe(name))
+			os.Stdout.WriteString(r.describe(name, ansi.DefaultScheme))
 		}
 	}
 
 	return pass
-}
-
-func (r result) describe(name string) string {
-	var aType, eType string
-	var showActual, showExpect bool
-
-	if r.actual != nil {
-		aType = typeOf(r.actual.value)
-		if r.actual.value == nil {
-			aType += " <nil>"
-		}
-		showActual = true
-	}
-
-	if r.expect != nil {
-		eType = typeOf(r.expect.value)
-		if r.expect.value == nil {
-			eType += " <nil>"
-		}
-		showExpect = true
-	}
-
-	scheme := ansi.DefaultScheme
-
-	t := table.NewWithTitle(scheme.Strong(fmt.Sprintf("Failed test: %s", name)))
-
-	addHeaders(t, r)
-
-	var actual, expect, op string
-	if showActual {
-		actual = fmt.Sprintf("%v", r.actual.value)
-	}
-	if showExpect {
-		expect = fmt.Sprintf("%v", r.expect.value)
-	}
-	op = r.op
-
-	if r.where == inType {
-		aType = scheme.Incorrect(aType)
-		eType = scheme.Correct(eType)
-	} else if r.where == inValue {
-		actual = scheme.Incorrect(actual)
-		expect = scheme.Correct(expect)
-	} else if r.where == inDataStructure {
-		op = scheme.Incorrect(op)
-	}
-
-	lastBodyRow := []interface{}{}
-	if len(r.path) != 0 {
-		lastBodyRow = append(lastBodyRow, "")
-	}
-	if showActual {
-		lastBodyRow = append(lastBodyRow, aType, actual)
-	}
-	if op != "" {
-		lastBodyRow = append(lastBodyRow, op)
-	}
-	if showExpect {
-		lastBodyRow = append(lastBodyRow, eType, expect)
-	}
-	if len(r.path) != 0 {
-		lastBodyRow = append(lastBodyRow, "")
-	}
-
-	body := [][]interface{}{}
-	for _, p := range r.path {
-		body = append(
-			body,
-			[]interface{}{
-				p.data,
-				cell.NewWithParams("", len(lastBodyRow)-2, cell.AlignLeft),
-				pathSummary(p),
-			},
-		)
-	}
-	body = append(body, lastBodyRow)
-
-	for _, b := range body {
-		t.AddRow(b...)
-	}
-
-	if r.description != "" {
-		span := 0
-		if len(r.path) != 0 {
-			span += 2
-		}
-		if showActual {
-			span += 2
-		}
-		if op != "" {
-			span += 1
-		}
-		if showExpect {
-			span += 2
-		}
-		t.AddFooterRow(
-			cell.NewWithParams(scheme.Strong(scheme.Incorrect(r.description)), span, cell.AlignLeft),
-		)
-	}
-
-	rendered, err := t.Render(style.Default)
-	if err != nil {
-		panic(err)
-	}
-	return rendered
-}
-
-func addHeaders(t *table.Table, r result) {
-	first := []interface{}{}
-	if len(r.path) != 0 {
-		first = append(first, "")
-	}
-	if r.actual != nil {
-		first = append(
-			first,
-			cell.NewWithParams("ACTUAL", 2, cell.AlignCenter),
-		)
-		if r.op != "" {
-			first = append(first, cell.NewWithParams("", 1, cell.AlignCenter))
-		}
-	}
-
-	if r.expect != nil {
-		first = append(first, cell.NewWithParams("EXPECT", 2, cell.AlignCenter))
-	}
-	if len(r.path) != 0 {
-		first = append(first, "")
-	}
-
-	t.AddHeaderRow(first...)
-
-	second := []interface{}{}
-	if len(r.path) != 0 {
-		second = append(second, cell.NewWithParams("PATH", 1, cell.AlignCenter))
-	}
-
-	if r.actual != nil {
-		second = append(
-			second,
-			cell.NewWithParams("TYPE", 1, cell.AlignCenter),
-			cell.NewWithParams("VALUE", 1, cell.AlignCenter),
-		)
-	}
-	if r.op != "" {
-		second = append(second, cell.NewWithParams("OP", 1, cell.AlignCenter))
-	}
-
-	if r.expect != nil {
-		second = append(
-			second,
-			cell.NewWithParams("TYPE", 1, cell.AlignCenter),
-			cell.NewWithParams("VALUE", 1, cell.AlignCenter),
-		)
-	}
-	if len(r.path) != 0 {
-		second = append(second, cell.NewWithParams("CALLER", 1, cell.AlignCenter))
-	}
-
-	t.AddHeaderRow(second...)
-
-}
-
-func pathSummary(p path) string {
-	return fmt.Sprintf("%s called %s", p.at, p.caller)
-}
-
-func typeOf(val interface{}) string {
-	return describeType(reflect.ValueOf(val).Type())
-}
-
-func describeType(ty reflect.Type) string {
-	k := ty.Kind().String()
-	// This is only true for simple types like string, float64, etc. If it's
-	// not composite or it's not a built-in then the name doesn't match the
-	// kind.
-	if k == ty.Name() {
-		return k
-	}
-
-	switch ty.Kind() {
-	case reflect.Array:
-		return fmt.Sprintf("[%d]", ty.Len()) + describeType(ty.Elem())
-	case reflect.Chan:
-		return fmt.Sprintf("chan(%s)", describeType(ty.Elem()))
-	case reflect.Func:
-		return describeFunc(ty)
-	case reflect.Interface:
-		// Can this happen?
-	case reflect.Map:
-		return fmt.Sprintf("map[%s]%s", describeType(ty.Key()), describeType(ty.Elem()))
-	case reflect.Ptr:
-		return "*" + describeType(ty.Elem())
-	case reflect.Slice:
-		return "[]" + describeType(ty.Elem())
-	case reflect.Struct:
-		return describeStruct(ty)
-	case reflect.UnsafePointer:
-		return "*<unsafe>"
-	}
-
-	// wtf - should not get here
-	return ""
-}
-
-func describeFunc(ty reflect.Type) string {
-	desc := "func "
-	if name := ty.Name(); name != "" {
-		desc = desc + name + " "
-	}
-
-	desc = desc + "("
-	for i := 0; i < ty.NumIn(); i++ {
-		desc = desc + describeType(ty.In(i))
-	}
-	if ty.IsVariadic() {
-		desc = desc + "..."
-	}
-	desc = desc + ") "
-
-	if ty.NumOut() > 1 {
-		desc = desc + "("
-	}
-	for i := 0; i < ty.NumOut(); i++ {
-		desc = desc + describeType(ty.Out(i))
-	}
-	if ty.NumOut() > 1 {
-		desc = desc + ")"
-	}
-
-	return desc
-}
-
-func describeStruct(ty reflect.Type) string {
-	if ty.Name() != "" {
-		return ty.Name()
-	}
-
-	return "<anon struct>"
 }
 
 var vowelRE = regexp.MustCompile(`^[aeiou]`)
