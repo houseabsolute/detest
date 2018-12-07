@@ -14,6 +14,9 @@ func (d *D) Equal(expect interface{}) ExactEqualityComparer {
 }
 
 func (eec ExactEqualityComparer) Compare(d *D) {
+	d.PushPath(d.makePath(describeType(reflect.TypeOf(d.Actual())), 1, "detest.(*D).Equal"))
+	defer d.PopPath()
+
 	actual := d.Actual()
 	expect := eec.expect
 	result := result{
@@ -64,6 +67,9 @@ func (d *D) ValueEqual(expect interface{}) ValueEqualityComparer {
 }
 
 func (vec ValueEqualityComparer) Compare(d *D) {
+	d.PushPath(d.makePath(describeType(reflect.TypeOf(d.Actual())), 1, "detest.(*D).ValueEqual"))
+	defer d.PopPath()
+
 	actual := d.Actual()
 	expect := vec.expect
 	result := result{
