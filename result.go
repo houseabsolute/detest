@@ -225,12 +225,15 @@ func describeTypeOfValue(val interface{}) string {
 }
 
 func describeType(ty reflect.Type) string {
-	k := ty.Kind().String()
-	// This is only true for simple types like string, float64, etc. If it's
+	// This is only true for built-in types like string, float64, etc. If it's
 	// not composite or it's not a built-in then the name doesn't match the
 	// kind.
-	if k == ty.Name() {
-		return k
+	if ty.Kind().String() == ty.Name() {
+		return ty.Name()
+	}
+
+	if ty.Name() != "" {
+		return ty.Name()
 	}
 
 	switch ty.Kind() {
