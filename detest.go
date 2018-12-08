@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"testing"
 
 	"github.com/houseabsolute/detest/internal/ansi"
 )
@@ -45,11 +44,22 @@ type Comparer interface {
 	Compare(*D)
 }
 
+// TestingT is an interface wrapper around `*testing.T` for the portion of its
+// API that we care about.
+type TestingT interface {
+	Fail()
+}
+
+type StringWriter interface {
+	WriteString(string) (int, error)
+}
+
 // D contains state for the current set of tests. You should create a new `D`
 // in every `Test*` function or subtest.
 type D struct {
-	t     *testing.T
-	state *state
+	t      TestingT
+	state  *state
+	output StringWriter
 }
 
 var ourPackages = map[string]bool{}
@@ -75,9 +85,14 @@ func packageFromFrame(frame runtime.Frame) string {
 	return s[0]
 }
 
-// New takes a `*testing.T` and returns a new `*detest.D`.
-func New(t *testing.T) *D {
-	return &D{t: t}
+// New takes any implementer of the `TestingT` interface and returns a new
+// `*detest.D`.
+func New(t TestingT) *D {
+	return &D{t: t, output: os.Stdout}
+}
+
+func NewWithOutput(t TestingT, o StringWriter) *D {
+	return &D{t:t, output: o}
 }
 
 // ResetState resets the internal state of the `*detest.D` struct. This is
@@ -197,11 +212,11 @@ func (d *D) ok(name string) bool {
 	for _, r := range d.state.results {
 		var err error
 		if r.pass {
-			_, err = os.Stdout.WriteString(fmt.Sprintf("Passed test: %s\n", name))
+			_, err = d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
 		} else {
 			pass = false
 			d.t.Fail()
-			_, err = os.Stdout.WriteString(r.describe(name, ansi.DefaultScheme))
+			_, err = d.output.WriteString(r.describe(name, ansi.DefaultScheme))
 		}
 		if err != nil {
 			panic(err)
