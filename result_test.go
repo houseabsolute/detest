@@ -3,7 +3,7 @@ package detest
 import (
 	"testing"
 
-	"github.com/autarch/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 type stringish string

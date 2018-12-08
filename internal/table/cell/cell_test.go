@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/autarch/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/houseabsolute/detest/internal/ansi"
 	"github.com/houseabsolute/detest/internal/table/style"
 )

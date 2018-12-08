@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/autarch/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/houseabsolute/detest/internal/table/cell"
 	"github.com/houseabsolute/detest/internal/table/row"
 	"github.com/houseabsolute/detest/internal/table/style"
