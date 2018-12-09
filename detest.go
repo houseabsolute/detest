@@ -51,6 +51,7 @@ type TestingT interface {
 	Fail()
 }
 
+// StringWriter is an interface used for writing strings.
 type StringWriter interface {
 	WriteString(string) (int, error)
 }
@@ -70,6 +71,11 @@ func init() {
 	ourPackages[packageFromFrame(findFrame(0))] = true
 }
 
+// RegisterPackage adds the caller's package to the list of "internal"
+// packages for the purposes of presenting paths in test failure
+// output. Specifically, when a function in a registered package is found as
+// the caller for a path, detest will use the function name as the caller
+// rather than showing the file and line where the call occurred.
 func RegisterPackage() {
 	ourPackages[packageFromFrame(findFrame(1))] = true
 }
@@ -96,7 +102,7 @@ func packageFromFrame(frame runtime.Frame) string {
 }
 
 // New takes any implementer of the `TestingT` interface and returns a new
-// `*detest.D`.
+// `*detest.D`. A `*D` created this way will send its output to `os.Stdout`.
 func New(t TestingT) *D {
 	return &D{
 		t:             t,
@@ -105,6 +111,10 @@ func New(t TestingT) *D {
 	}
 }
 
+// NewWithOutput takes any implementer of the `TestingT` interface and a
+// `StringWriter` implementer and returns a new `*detest.D`. This is provided
+// primarily for the benefit of testing code that wants to capture the output
+// from detest.
 func NewWithOutput(t TestingT, o StringWriter) *D {
 	return &D{t: t, output: o}
 }
