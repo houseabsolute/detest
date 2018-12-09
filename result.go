@@ -173,13 +173,15 @@ func (d describer) lastBodyRow() []interface{} {
 	if d.r.showExpect() {
 		eType = d.r.expect.description()
 	}
-	if d.r.where == inType {
+
+	switch d.r.where {
+	case inType:
 		aType = d.s.Incorrect(aType)
 		eType = d.s.Correct(eType)
-	} else if d.r.where == inValue {
+	case inValue:
 		actual = d.s.Incorrect(actual)
 		expect = d.s.Correct(expect)
-	} else if d.r.where == inDataStructure {
+	case inDataStructure:
 		op = d.s.Incorrect(op)
 	}
 
@@ -262,23 +264,23 @@ func describeFunc(ty reflect.Type) string {
 		desc = desc + name + " "
 	}
 
-	desc = desc + "("
+	desc += "("
 	for i := 0; i < ty.NumIn(); i++ {
-		desc = desc + describeType(ty.In(i))
+		desc += describeType(ty.In(i))
 	}
 	if ty.IsVariadic() {
-		desc = desc + "..."
+		desc += "..."
 	}
-	desc = desc + ") "
+	desc += ") "
 
 	if ty.NumOut() > 1 {
-		desc = desc + "("
+		desc += "("
 	}
 	for i := 0; i < ty.NumOut(); i++ {
-		desc = desc + describeType(ty.Out(i))
+		desc += describeType(ty.Out(i))
 	}
 	if ty.NumOut() > 1 {
-		desc = desc + ")"
+		desc += ")"
 	}
 
 	return desc

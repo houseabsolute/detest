@@ -23,11 +23,14 @@ func (sc MapComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 	if v.Kind() != reflect.Map {
 		d.AddResult(result{
-			actual:      newValue(d.Actual()),
-			pass:        false,
-			where:       inDataStructure,
-			op:          "[]",
-			description: fmt.Sprintf("Called detest.Map() but the value being tested isn't a map, it's %s", articleize(describeType(v.Type()))),
+			actual: newValue(d.Actual()),
+			pass:   false,
+			where:  inDataStructure,
+			op:     "[]",
+			description: fmt.Sprintf(
+				"Called detest.Map() but the value being tested isn't a map, it's %s",
+				articleize(describeType(v.Type())),
+			),
 		})
 		return
 	}

@@ -67,6 +67,7 @@ type D struct {
 
 var ourPackages = map[string]bool{}
 
+// nolint: gochecknoinits
 func init() {
 	ourPackages[packageFromFrame(findFrame(0))] = true
 }

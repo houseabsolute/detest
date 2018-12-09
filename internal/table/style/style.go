@@ -4,7 +4,7 @@ type Style struct {
 	IncludeANSI bool
 }
 
-var Default Style = Style{
+var Default = Style{
 	IncludeANSI: true,
 }
 

@@ -71,7 +71,7 @@ func (s Separator) Render(ri renderinfo.RI, before, after *row.Row) (string, err
 	return string(rendered), nil
 }
 
-func (s Separator) base(ri renderinfo.RI) (rune, rune, rune, error) {
+func (s Separator) base(_ renderinfo.RI) (rune, rune, rune, error) {
 	switch s.sepType {
 	case Start:
 		return border.TableTopLeft.Rune(), border.HorizontalHeavy.Rune(), border.TableTopRight.Rune(), nil

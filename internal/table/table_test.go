@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/houseabsolute/detest/internal/table/cell"
 	"github.com/houseabsolute/detest/internal/table/row"
 	"github.com/houseabsolute/detest/internal/table/style"
+	"github.com/stretchr/testify/assert"
 )
 
 type testCell struct {
@@ -264,6 +264,7 @@ var tests = []testCase{
 
 func TestRender(t *testing.T) {
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			var tab *Table
 			if test.title != "" {

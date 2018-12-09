@@ -67,6 +67,7 @@ func (r *Row) Render(ri renderinfo.RI, sty style.Style) (string, error) {
 	rendered := border.Vertical.String()
 
 	if debug.Debug {
+		// nolint: errcheck
 		os.Stderr.WriteString("\n  Rendering row\n")
 	}
 
@@ -88,7 +89,6 @@ func (r *Row) Render(ri renderinfo.RI, sty style.Style) (string, error) {
 		}
 		// We need to add one more for each separator that the cell spans.
 		w += (c.ColSpan - 1)
-		i += c.ColSpan
 
 		if debug.Debug {
 			fmt.Fprintf(os.Stderr, "      w = %d\n", w)

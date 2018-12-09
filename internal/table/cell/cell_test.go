@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/houseabsolute/detest/internal/ansi"
 	"github.com/houseabsolute/detest/internal/table/style"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDisplayWidth(t *testing.T) {
@@ -39,6 +39,7 @@ func TestDisplayWidth(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expect, New(test.content).DisplayWidth())
 		})
@@ -141,6 +142,7 @@ func Test_pad(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			output := NewWithParams(test.content, 1, test.alignment).pad(style.Default, test.width)
 			assert.Equal(t, test.expect, output)

@@ -6,12 +6,12 @@ package row_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/houseabsolute/detest/internal/ansi"
 	"github.com/houseabsolute/detest/internal/table/cell"
 	"github.com/houseabsolute/detest/internal/table/renderinfo/builder"
 	"github.com/houseabsolute/detest/internal/table/row"
 	"github.com/houseabsolute/detest/internal/table/style"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestColumnNumbers(t *testing.T) {

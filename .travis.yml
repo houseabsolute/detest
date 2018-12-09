@@ -9,6 +9,6 @@ install:
 - ./dev/bin/install-dev-tools.sh
 
 script:
-- ./dev/bin/run-gometalinter-helper.sh -all
+- ./dev/bin/run-golangci-lint.sh
 - dep check
 - go test -v $(go list -v ./...|grep -v demo)

@@ -18,7 +18,9 @@ import (
 
 func BuildRenderInfo(rows []*row.Row) renderinfo.RI {
 	if debug.Debug {
+		// nolint: errcheck
 		os.Stderr.WriteString("  calculating column widths\n")
+		// nolint: errcheck
 		os.Stderr.WriteString("  -------------------------\n")
 	}
 
@@ -58,7 +60,9 @@ func BuildRenderInfo(rows []*row.Row) renderinfo.RI {
 	}
 
 	if debug.Debug {
+		// nolint: errcheck
 		os.Stderr.WriteString("  final column widths\n")
+		// nolint: errcheck
 		os.Stderr.WriteString("  -------------------\n")
 
 		nums := []int{}

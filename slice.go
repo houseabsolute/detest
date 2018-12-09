@@ -23,11 +23,14 @@ func (sc SliceComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 	if v.Kind() != reflect.Slice {
 		d.AddResult(result{
-			actual:      newValue(d.Actual()),
-			pass:        false,
-			where:       inDataStructure,
-			op:          "[]",
-			description: fmt.Sprintf("Called detest.Slice() but the value being tested isn't a slice, it's %s", articleize(describeType(v.Type()))),
+			actual: newValue(d.Actual()),
+			pass:   false,
+			where:  inDataStructure,
+			op:     "[]",
+			description: fmt.Sprintf(
+				"Called detest.Slice() but the value being tested isn't a slice, it's %s",
+				articleize(describeType(v.Type())),
+			),
 		})
 		return
 	}

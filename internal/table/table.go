@@ -51,7 +51,9 @@ func maybeMakeRow(cells ...interface{}) *row.Row {
 		if c, ok := pc.(*cell.Cell); ok {
 			row.AddCell(c)
 		} else if c, ok := pc.(string); ok {
-			row.AddCell(cell.New(fmt.Sprintf("%s", c)))
+			row.AddCell(cell.New(c))
+		} else {
+			row.AddCell(cell.New(fmt.Sprintf("%v", c)))
 		}
 	}
 	return row
@@ -63,10 +65,13 @@ func (t *Table) Render(style style.Style) (string, error) {
 	}
 
 	if debug.Debug {
+		// nolint: errcheck
 		os.Stderr.WriteString("Rendering table\n")
 		if t.title != "" {
+			// nolint: errcheck
 			os.Stderr.WriteString("  has a title\n")
 		} else {
+			// nolint: errcheck
 			os.Stderr.WriteString("  no title\n")
 		}
 		fmt.Fprintf(os.Stderr, "  %d header row(s)\n", len(t.header))

@@ -120,43 +120,43 @@ func (vec ValueEqualityComparer) Compare(d *D) {
 	d.PushPath(d.NewPath(describeType(reflect.TypeOf(d.Actual())), 1, "detest.(*D).ValueEqual"))
 	defer d.PopPath()
 
-	actual := d.Actual()
-	expect := vec.expect
-	result := result{
-		actual: newValue(actual),
-		expect: newValue(expect),
-		op:     "== (value)",
-	}
-	if actual == nil || expect == nil {
-		// Two nils are only equal if they're also the same type.
-		if actual == expect {
-			result.pass = true
-		} else {
-			result.pass = false
-			result.where = inType
-		}
-	}
+	// actual := d.Actual()
+	// expect := vec.expect
+	// result := result{
+	// 	actual: newValue(actual),
+	// 	expect: newValue(expect),
+	// 	op:     "== (value)",
+	// }
+	// if actual == nil || expect == nil {
+	// 	// Two nils are only equal if they're also the same type.
+	// 	if actual == expect {
+	// 		result.pass = true
+	// 	} else {
+	// 		result.pass = false
+	// 		result.where = inType
+	// 	}
+	// }
 
-	exp, ok := expect.([]byte)
-	if !ok {
-		// Need to replace this with something that traverses a data structure
-		// recording our path as we go.
-		result.pass = reflect.DeepEqual(actual, expect)
-		result.where = inValue
-	} else {
-		act, ok := actual.([]byte)
-		if !ok {
-			result.pass = false
-			result.where = inValue
-		}
-		if exp == nil || act == nil {
-			result.pass = exp == nil && act == nil
-			result.where = inValue
-		} else {
-			result.pass = bytes.Equal(act, exp)
-			result.where = inValue
-		}
-	}
+	// exp, ok := expect.([]byte)
+	// if !ok {
+	// 	// Need to replace this with something that traverses a data structure
+	// 	// recording our path as we go.
+	// 	result.pass = reflect.DeepEqual(actual, expect)
+	// 	result.where = inValue
+	// } else {
+	// 	act, ok := actual.([]byte)
+	// 	if !ok {
+	// 		result.pass = false
+	// 		result.where = inValue
+	// 	}
+	// 	if exp == nil || act == nil {
+	// 		result.pass = exp == nil && act == nil
+	// 		result.where = inValue
+	// 	} else {
+	// 		result.pass = bytes.Equal(act, exp)
+	// 		result.where = inValue
+	// 	}
+	// }
 
-	d.AddResult(result)
+	// d.AddResult(result)
 }

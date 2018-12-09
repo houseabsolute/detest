@@ -8,7 +8,7 @@ import (
 
 type stringish string
 type structy struct {
-	// nolint:megacheck
+	// nolint: megacheck, structcheck
 	ignored string
 }
 

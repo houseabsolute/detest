@@ -68,17 +68,18 @@ func (c *Cell) pad(sty style.Style, width int) string {
 
 func (c *Cell) align(content string, width int) string {
 	extra := width - displayWidth(content)
-	if c.alignment == AlignLeft {
+	switch c.alignment {
+	case AlignLeft:
 		return content + strings.Repeat(" ", extra)
-	} else if c.alignment == AlignRight {
+	case AlignRight:
 		return strings.Repeat(" ", extra) + content
-	} else if c.alignment == AlignCenter {
+	case AlignCenter:
 		// If this division by two is X.5 we want the extra space _after_ the
 		// content, not before. It looks better that way.
 		before := int(math.Floor(float64(extra) / 2))
 		after := int(math.Ceil(float64(extra) / 2))
 		return strings.Repeat(" ", before) + content + strings.Repeat(" ", after)
-	} else {
+	default:
 		panic(fmt.Sprintf("Very surprising alignmnent: %d", c.alignment))
 	}
 }
