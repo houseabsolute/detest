@@ -9,6 +9,6 @@ install:
 - ./dev/bin/install-dev-tools.sh
 
 script:
-- ./dev/bin/run-golangci-lint.sh
+- if [[ "$TRAVIS_GO_VERSION" == "1.x" ]]; then ./dev/bin/run-golangci-lint.sh; fi
 - dep check
 - go test -v $(go list -v ./...|grep -v demo)
