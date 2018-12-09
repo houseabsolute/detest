@@ -1,12 +1,11 @@
 package detest
 
 import (
-	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/autarch/testify/mock"
 )
 
 type call struct {
@@ -49,13 +48,13 @@ func (mt *mockT) AssertNotCalled(t *testing.T, method string) {
 func (mt *mockT) AssertCalled(t *testing.T, method string, args ...interface{}) {
 	for _, c := range mt.calls {
 		if c.method == method {
-			if reflect.DeepEqual(c.args, args) {
+			_, differences := mock.Arguments(args).Diff(c.args)
+			if differences == 0 {
 				return
 			}
 		}
 	}
-	spew.Dump(mt.calls)
-	t.Errorf("Expected the %s method to be called with %d args but it was not", method, len(args))
+	t.Errorf("Expected the %s method to be called with:\n%v\nbut it was not", method, args)
 }
 
 func (mt *mockT) Fail() {

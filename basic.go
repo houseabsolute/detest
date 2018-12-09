@@ -17,7 +17,8 @@ type ExactEqualityComparer struct {
 //
 // Under the hood this is implemented with the ExactEqualityComparer.
 func (d *D) Is(actual, expect interface{}, name string) bool {
-	d.ResetState(actual)
+	d.ResetState()
+	d.PushActual(actual)
 	defer d.PopActual()
 
 	if c, ok := expect.(Comparer); ok {
@@ -96,7 +97,8 @@ type ValueEqualityComparer struct {
 //
 // Under the hood this is implemented with the ValueEqualityComparer.
 func (d *D) ValueIs(actual, expect interface{}, name string) bool {
-	d.ResetState(actual)
+	d.ResetState()
+	d.PushActual(actual)
 	defer d.PopActual()
 
 	d.ValueEqual(expect).Compare(d)

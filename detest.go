@@ -5,6 +5,7 @@ package detest
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -26,8 +27,8 @@ const (
 // about the call stack at that particular point in the data path.
 type Path struct {
 	data   string
+	callee string
 	caller string
-	at     string
 }
 
 type state struct {
@@ -57,50 +58,62 @@ type StringWriter interface {
 // D contains state for the current set of tests. You should create a new `D`
 // in every `Test*` function or subtest.
 type D struct {
-	t      TestingT
-	state  *state
-	output StringWriter
+	t             TestingT
+	callerPackage string
+	state         *state
+	output        StringWriter
 }
 
 var ourPackages = map[string]bool{}
 
 func init() {
+	ourPackages[packageFromFrame(findFrame(0))] = true
+}
+
+func RegisterPackage() {
+	ourPackages[packageFromFrame(findFrame(1))] = true
+}
+
+func findFrame(s int) runtime.Frame {
 	pc := make([]uintptr, 1)
-	n := runtime.Callers(1, pc)
+	n := runtime.Callers(s+1, pc)
 	if n == 0 {
 		panic("Cannot get New() from runtime.Callers!")
 	}
 	frames := runtime.CallersFrames(pc)
 	frame, _ := frames.Next()
-	pkg := packageFromFrame(frame)
-
-	ourPackages[pkg] = true
+	return frame
 }
 
+var packageRE = regexp.MustCompile(`((?:[^/]+/)*[^\.]+)\.`)
+
 func packageFromFrame(frame runtime.Frame) string {
-	s := strings.Split(frame.Function, ".")
-	if len(s) == 0 {
+	m := packageRE.FindStringSubmatch(frame.Function)
+	if len(m) == 1 {
 		return ""
 	}
-	return s[0]
+	return m[1]
 }
 
 // New takes any implementer of the `TestingT` interface and returns a new
 // `*detest.D`.
 func New(t TestingT) *D {
-	return &D{t: t, output: os.Stdout}
+	return &D{
+		t:             t,
+		callerPackage: packageFromFrame(findFrame(1)),
+		output:        os.Stdout,
+	}
 }
 
 func NewWithOutput(t TestingT, o StringWriter) *D {
-	return &D{t:t, output: o}
+	return &D{t: t, output: o}
 }
 
 // ResetState resets the internal state of the `*detest.D` struct. This is
 // public for the benefit of test packages that want to provide their own
 // comparers or test functions like `detest.Is`.
-func (d *D) ResetState(actual interface{}) {
+func (d *D) ResetState() {
 	d.state = &state{}
-	d.PushActual(actual)
 }
 
 // PushActual adds an actual variable being tested to the current stack of
@@ -117,12 +130,12 @@ func (d *D) PopActual() {
 	}
 }
 
-var callerRE = regexp.MustCompile(`^.+/`)
+var funcNameRE = regexp.MustCompile(`^.+/`)
 
 // NewPath takes a data path element, the number of frames to skip, and an
 // optional function name. It returns a new `Path` struct. If the function
-// name is given, then this is used as the caller rather than looking at the
-// call frame's function.
+// name is given, then this is used as the called function rather than looking
+// at the call frames .
 //
 // When the desired frame is from a package marked as internal to detest, then
 // the caller's line and file is replaced with a function name so that we
@@ -130,6 +143,8 @@ var callerRE = regexp.MustCompile(`^.+/`)
 // displaying the path.
 func (d *D) NewPath(data string, skip int, function string) Path {
 	pc := make([]uintptr, 2)
+	// The hard-coded "2" is here because we want to skip this frame and the
+	// frame of the caller. We're interested in the frames before that.
 	n := runtime.Callers(2+skip, pc)
 	if n == 0 {
 		return Path{data: data}
@@ -138,43 +153,65 @@ func (d *D) NewPath(data string, skip int, function string) Path {
 	frames := runtime.CallersFrames(pc)
 	frame, more := frames.Next()
 
-	var caller string
-	if function == "" {
-		caller = frame.Function
-		if caller == "" {
-			caller = "<unknown>"
-		}
-	} else {
-		caller = function
-	}
+	var callee = calleeFromFrame(frame, function)
 
 	if !more {
 		return Path{
 			data:   data,
-			caller: callerRE.ReplaceAllLiteralString(caller, ""),
+			callee: funcNameRE.ReplaceAllLiteralString(callee, ""),
 		}
 	}
 
 	frame, _ = frames.Next()
 
-	var at string
-	if ourPackages[packageFromFrame(frame)] {
-		at = callerRE.ReplaceAllLiteralString(frame.Function, "")
-	} else {
-		wd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		fileRE := regexp.MustCompile(`^` + wd + `/`)
-
-		at = fmt.Sprintf("%s@%d", fileRE.ReplaceAllLiteralString(frame.File, ""), frame.Line)
-	}
-
 	return Path{
 		data:   data,
-		caller: callerRE.ReplaceAllLiteralString(caller, ""),
-		at:     at,
+		callee: funcNameRE.ReplaceAllLiteralString(callee, ""),
+		caller: d.callerFromFrame(frame),
 	}
+}
+
+func calleeFromFrame(frame runtime.Frame, function string) string {
+	if function != "" {
+		return function
+	}
+
+	callee := frame.Function
+	if callee == "" {
+		callee = "<unknown>"
+	}
+
+	return callee
+}
+
+func (d *D) callerFromFrame(frame runtime.Frame) string {
+	if ourPackages[packageFromFrame(frame)] {
+		return funcNameRE.ReplaceAllLiteralString(frame.Function, "")
+	}
+
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = filepath.Join(os.Getenv("HOME"), "go")
+	}
+
+	file := frame.File
+	for _, p := range strings.Split(gopath, ":") {
+		src := filepath.Join(p, "src")
+		if strings.HasPrefix(file, src) {
+			// We want to remove the remaining separator character that's left
+			// after the trim.
+			file = strings.TrimPrefix(frame.File, src)[1:]
+			break
+		}
+	}
+	// If the caller is in the package that created our *D then we can strip
+	// that from the caller path and just show a path relative to the package
+	// root.
+	if strings.HasPrefix(file, d.callerPackage) {
+		file = strings.TrimPrefix(file, d.callerPackage)[1:]
+	}
+
+	return fmt.Sprintf("%s@%d", file, frame.Line)
 }
 
 // PushPath adds a path to the current path stack.
@@ -229,14 +266,5 @@ func (d *D) ok(name string) bool {
 // CalledAt returns a string describing the function, file, and line for this
 // path element.
 func (p Path) CalledAt() string {
-	return fmt.Sprintf("%s called %s", p.at, p.caller)
-}
-
-var vowelRE = regexp.MustCompile(`^[aeiou]`)
-
-func articleize(noun string) string {
-	if vowelRE.MatchString(noun) {
-		return "an " + noun
-	}
-	return "a " + noun
+	return fmt.Sprintf("%s called %s", p.caller, p.callee)
 }
