@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/autarch/testify/mock"
+	"github.com/stretchr/testify/mock"
 )
 
 type call struct {
