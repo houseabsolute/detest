@@ -1,3 +1,7 @@
+//+build demo
+
+// Run this with `go test -tags demo -v ./demo/`
+
 package demo
 
 import (
