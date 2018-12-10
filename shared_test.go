@@ -65,3 +65,15 @@ func (mt *mockT) WriteString(s string) (int, error) {
 	mt.called(s)
 	return len([]byte(s)), nil
 }
+
+type GTComparer int
+
+func (sc GTComparer) Compare(d *D) {
+	d.AddResult(result{
+		pass:   d.Actual().(int) > int(sc),
+		actual: newValue(d.Actual()),
+		expect: newValue(sc),
+		op:     ">",
+		where:  inValue,
+	})
+}
