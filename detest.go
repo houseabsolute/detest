@@ -249,8 +249,8 @@ func (d *D) Actual() interface{} {
 // AddResult adds a test result. At the end of a test any result which is
 // marked as failing is displayed as its own table.
 func (d *D) AddResult(r result) {
-	// We want to make a new slice since d.state.path will could get pushed
-	// and popped after this result is saved.
+	// We want to make a new slice since d.state.path could get pushed and
+	// popped after this result is saved.
 	r.path = append(r.path, d.state.path...)
 	d.state.results = append(d.state.results, r)
 }

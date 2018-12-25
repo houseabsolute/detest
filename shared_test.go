@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type call struct {
-	method string
-	args   []interface{}
+type Call struct {
+	Method string
+	Args   []interface{}
 }
 
 type mockT struct {
-	calls []call
+	calls []Call
 }
 
 func (mt *mockT) called(args ...interface{}) {
@@ -25,7 +25,7 @@ func (mt *mockT) called(args ...interface{}) {
 	}
 	frames := runtime.CallersFrames(pc)
 	frame, _ := frames.Next()
-	mt.calls = append(mt.calls, call{method: methodName(frame.Function), args: args})
+	mt.calls = append(mt.calls, Call{Method: methodName(frame.Function), Args: args})
 }
 
 func methodName(f string) string {
@@ -38,7 +38,7 @@ func methodName(f string) string {
 
 func (mt *mockT) AssertNotCalled(t *testing.T, method string) {
 	for _, c := range mt.calls {
-		if c.method == method {
+		if c.Method == method {
 			t.Errorf("The %s method was called when it should not have been", method)
 			return
 		}
@@ -47,14 +47,27 @@ func (mt *mockT) AssertNotCalled(t *testing.T, method string) {
 
 func (mt *mockT) AssertCalled(t *testing.T, method string, args ...interface{}) {
 	for _, c := range mt.calls {
-		if c.method == method {
-			_, differences := mock.Arguments(args).Diff(c.args)
+		if c.Method == method {
+			_, differences := mock.Arguments(args).Diff(c.Args)
 			if differences == 0 {
 				return
 			}
+
+			t.Errorf("Expected the %s method to be called with:\n%v\nbut it was called with:\n%v\n", method, args, c.Args)
+			return
 		}
 	}
-	t.Errorf("Expected the %s method to be called with:\n%v\nbut it was not", method, args)
+	t.Errorf("Expected the %s method to be called with:\n%v\nbut it was never called", method, args)
+}
+
+func (mt *mockT) FindCall(method string) *Call {
+	for _, c := range mt.calls {
+		if c.Method == method {
+			c := c
+			return &c
+		}
+	}
+	return nil
 }
 
 func (mt *mockT) Fail() {
