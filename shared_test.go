@@ -1,12 +1,32 @@
 package detest
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+type DetestRecorder struct {
+	*D
+	record []*state
+}
+
+func NewRecorder(d *D) *DetestRecorder {
+	return &DetestRecorder{
+		d,
+		[]*state{},
+	}
+}
+
+func (d *DetestRecorder) Is(actual, expect interface{}, name string) bool {
+	ok := d.D.Is(actual, expect, name)
+	d.record = append(d.record, d.D.state)
+	return ok
+}
 
 type Call struct {
 	Method string
@@ -77,6 +97,27 @@ func (mt *mockT) Fail() {
 func (mt *mockT) WriteString(s string) (int, error) {
 	mt.called(s)
 	return len([]byte(s)), nil
+}
+
+type resultExpect struct {
+	pass     bool
+	dataPath []string
+}
+
+func AssertResultsAre(t *testing.T, actual []result, expect []resultExpect, name string) {
+	if assert.Len(t, actual, len(expect), "got %d result(s)", len(expect)) {
+		for i := range expect {
+			i := i
+			t.Run(fmt.Sprintf("results[%d]", i), func(t *testing.T) {
+				assert.Equal(t, expect[i].pass, actual[i].pass, "got expected pass", i)
+				dataPath := []string{}
+				for _, p := range actual[i].path {
+					dataPath = append(dataPath, p.data)
+				}
+				assert.Equal(t, expect[i].dataPath, dataPath, "got expected data path")
+			})
+		}
+	}
 }
 
 type GTComparer int

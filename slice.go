@@ -7,13 +7,20 @@ import (
 
 // SliceComparer implements comparison of slice values.
 type SliceComparer struct {
-	with func(*D)
+	with func(*SliceTester)
 }
 
 // Slice takes a function which will be called to do further comparisons of
 // the slice's contents.
-func (d *D) Slice(with func(*D)) SliceComparer {
+func (d *D) Slice(with func(*SliceTester)) SliceComparer {
 	return SliceComparer{with}
+}
+
+// SliceTester is the struct that will be passed to the test function passed
+// to detest.Slice. This struct implements the slice-specific testing methods
+// such as Idx() and AllValues().
+type SliceTester struct {
+	d *D
 }
 
 // Compare compares the slice value in d.Actual() by calling the function
@@ -21,6 +28,9 @@ func (d *D) Slice(with func(*D)) SliceComparer {
 // slice's content.
 func (sc SliceComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
+	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Slice"))
+	defer d.PopPath()
+
 	if v.Kind() != reflect.Slice {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
@@ -35,84 +45,86 @@ func (sc SliceComparer) Compare(d *D) {
 		return
 	}
 
-	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Slice"))
-	defer d.PopPath()
-
-	sc.with(d)
+	sc.with(&SliceTester{d})
 }
 
 // Idx takes a slice index and an expected value for that index. If the index
 // is past the end of the array, this is considered a failure.
-func (d *D) Idx(idx int, expect interface{}) {
-	v := reflect.ValueOf(d.Actual())
+func (st *SliceTester) Idx(idx int, expect interface{}) {
+	v := reflect.ValueOf(st.d.Actual())
 
-	d.PushPath(d.NewPath(fmt.Sprintf("[%d]", idx), 0, ""))
-	defer d.PopPath()
+	st.d.PushPath(st.d.NewPath(fmt.Sprintf("[%d]", idx), 0, ""))
+	defer st.d.PopPath()
 
 	if idx >= v.Len() {
-		d.AddResult(result{
-			actual:      newValue(d.Actual()),
-			pass:        false,
-			where:       inDataStructure,
-			op:          fmt.Sprintf("[%d]", idx),
-			description: "Attempted to get an element past the end of the slice",
+		st.d.AddResult(result{
+			actual: newValue(st.d.Actual()),
+			pass:   false,
+			where:  inDataStructure,
+			op:     fmt.Sprintf("[%d]", idx),
+			description: fmt.Sprintf(
+				"Attempted to get an index (%d) past the end of a %d-element slice", idx, v.Len()),
 		})
 		return
 	}
 
-	d.PushActual(v.Index(idx).Interface())
-	defer d.PopActual()
+	st.d.PushActual(v.Index(idx).Interface())
+	defer st.d.PopActual()
 
 	if c, ok := expect.(Comparer); ok {
-		c.Compare(d)
+		c.Compare(st.d)
 	} else {
-		d.Equal(expect).Compare(d)
+		st.d.Equal(expect).Compare(st.d)
 	}
 }
 
-// AllSliceValues takes a function and turns it into a `FuncComparer`. It then
+// AllValues takes a function and turns it into a `FuncComparer`. It then
 // passes every slice value to that comparer in turn. The function must take
-// exactly one value matching the slice values' type and return a single boolean
-// value.
-func (d *D) AllSliceValues(check interface{}) {
-	d.PushPath(d.NewPath("{...}", 0, ""))
-	defer d.PopPath()
+// exactly one value matching the slice values' type and return a single
+// boolean value.
+func (st *SliceTester) AllValues(check interface{}) {
+	st.d.PushPath(st.d.NewPath("range", 0, ""))
+	defer st.d.PopPath()
 
 	v := reflect.ValueOf(check)
 	t := v.Type()
 	if v.Kind() != reflect.Func {
-		d.AddResult(result{
+		st.d.AddResult(result{
+			actual:      newValue(st.d.Actual()),
 			pass:        false,
 			where:       inUsage,
-			description: fmt.Sprintf("You passed a %s to AllValues but it needs a function", describeType(t)),
+			description: fmt.Sprintf("You passed %s to AllValues but it needs a function", articleize(describeType(t))),
 		})
 		return
 	}
 
 	if t.NumIn() != 1 {
-		d.AddResult(result{
+		st.d.AddResult(result{
+			actual:      newValue(st.d.Actual()),
 			pass:        false,
 			where:       inUsage,
-			description: fmt.Sprintf("The function passed to AllValues must take one value, but yours takes %d", t.NumIn()),
+			description: fmt.Sprintf("The function passed to AllValues must take 1 value, but yours takes %d", t.NumIn()),
 		})
 		return
 	}
 
 	if t.NumOut() != 1 {
-		d.AddResult(result{
+		st.d.AddResult(result{
+			actual:      newValue(st.d.Actual()),
 			pass:        false,
 			where:       inUsage,
-			description: fmt.Sprintf("The function passed to AllValues must return one value, but yours returns %d", t.NumOut()),
+			description: fmt.Sprintf("The function passed to AllValues must return 1 value, but yours returns %d", t.NumOut()),
 		})
 		return
 	}
 
 	if t.Out(0).Name() != "bool" {
-		d.AddResult(result{
-			pass:  false,
-			where: inUsage,
+		st.d.AddResult(result{
+			actual: newValue(st.d.Actual()),
+			pass:   false,
+			where:  inUsage,
 			description: fmt.Sprintf(
-				"The function passed to AllValues must return a boolean, but yours returns %s",
+				"The function passed to AllValues must return a bool, but yours returns %s",
 				articleize(describeType(t.Out(0))),
 			),
 		})
@@ -120,8 +132,8 @@ func (d *D) AllSliceValues(check interface{}) {
 	}
 
 	comparer := FuncComparer{comparer: v}
-	array := reflect.ValueOf(d.Actual())
+	array := reflect.ValueOf(st.d.Actual())
 	for i := 0; i < array.Len(); i++ {
-		d.Idx(i, comparer)
+		st.Idx(i, comparer)
 	}
 }

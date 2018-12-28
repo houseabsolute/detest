@@ -33,14 +33,14 @@ func (fc FuncComparer) Compare(d *D) {
 	}
 
 	ret := fc.comparer.Call([]reflect.Value{v})
-	if ret[0].Bool() {
-		return
+	r := result{
+		actual: newValue(d.Actual()),
+		pass:   ret[0].Bool(),
+		op:     "func()",
+	}
+	if !r.pass {
+		r.where = inValue
 	}
 
-	d.AddResult(result{
-		actual: newValue(d.Actual()),
-		pass:   false,
-		where:  inValue,
-		op:     "func()",
-	})
+	d.AddResult(r)
 }
