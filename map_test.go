@@ -6,23 +6,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// This looks like a dupe of the code in map_test because it's so similar in
+// This looks like a dupe of the code in slice_test because it's so similar in
 // many spots.
 //
 // nolint: dupl
-func TestSlice(t *testing.T) {
+func TestMap(t *testing.T) {
 	t.Run("Passing test", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		d.Is(
-			[]int{1},
-			d.Slice(func(st *SliceTester) {
-				st.Idx(0, 1)
+			map[int]int{1: 2},
+			d.Map(func(mt *MapTester) {
+				mt.Key(1, 2)
 			}),
-			"slice[0] == 1",
+			"map[1] == 2",
 		)
 		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Passed test: slice[0] == 1\n")
+		mockT.AssertCalled(t, "WriteString", "Passed test: map[1] == 2\n")
 	})
 
 	t.Run("Failing test", func(t *testing.T) {
@@ -30,11 +30,11 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
-				st.Idx(0, 2)
+			map[int]int{1: 2},
+			r.Map(func(mt *MapTester) {
+				mt.Key(1, 3)
 			}),
-			"slice[0] == 2",
+			"map[1] == 3",
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
@@ -42,25 +42,25 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: 1, desc: "int"},
-				expect: &value{value: 2, desc: "int"},
+				actual: &value{value: 2, desc: "int"},
+				expect: &value{value: 3, desc: "int"},
 				op:     "==",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
-						data:   "[0]",
-						callee: "detest.(*SliceTester).Idx",
-						caller: "detest.TestSlice.func2.1",
+						data:   "[1]",
+						callee: "detest.(*MapTester).Key",
+						caller: "detest.TestMap.func2.1",
 					},
 					{
 						data:   "int",
 						callee: "detest.(*D).Equal",
-						caller: "detest.TestSlice.func2.1",
+						caller: "detest.TestMap.func2.1",
 					},
 				},
 				where:       inValue,
@@ -76,13 +76,13 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1, 2, 3},
-			r.Slice(func(st *SliceTester) {
-				st.Idx(0, 1)
-				st.Idx(1, 3)
-				st.Idx(2, 3)
+			map[int]int{1: 2, 2: 3, 3: 4},
+			r.Map(func(st *MapTester) {
+				st.Key(1, 2)
+				st.Key(2, 4)
+				st.Key(3, 4)
 			}),
-			"slice mix",
+			"map mix",
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
@@ -96,25 +96,25 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: 2, desc: "int"},
-				expect: &value{value: 3, desc: "int"},
+				actual: &value{value: 3, desc: "int"},
+				expect: &value{value: 4, desc: "int"},
 				op:     "==",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
-						data:   "[1]",
-						callee: "detest.(*SliceTester).Idx",
-						caller: "detest.TestSlice.func3.1",
+						data:   "[2]",
+						callee: "detest.(*MapTester).Key",
+						caller: "detest.TestMap.func3.1",
 					},
 					{
 						data:   "int",
 						callee: "detest.(*D).Equal",
-						caller: "detest.TestSlice.func3.1",
+						caller: "detest.TestMap.func3.1",
 					},
 				},
 				where:       inValue,
@@ -131,16 +131,16 @@ func TestSlice(t *testing.T) {
 		)
 	})
 
-	t.Run("Passed non-slice to Slice", func(t *testing.T) {
+	t.Run("Passed non-map to Map", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
 			42,
-			r.Slice(func(st *SliceTester) {
-				st.Idx(0, 1)
+			r.Map(func(st *MapTester) {
+				st.Key(0, 1)
 			}),
-			"non-slice",
+			"non-map",
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
@@ -154,27 +154,27 @@ func TestSlice(t *testing.T) {
 				pass:   false,
 				path: []Path{{
 					data:   "int",
-					callee: "detest.(*D).Slice",
+					callee: "detest.(*D).Map",
 					caller: "detest.(*DetestRecorder).Is",
 				}},
 				where:       inDataStructure,
-				description: "Called detest.Slice() but the value being tested isn't a slice, it's an int",
+				description: "Called detest.Map() but the value being tested isn't a map, it's an int",
 			},
 			r.record[0].results[0],
 			"got the expected result",
 		)
 	})
 
-	t.Run("Idx called past end of slice", func(t *testing.T) {
+	t.Run("Key called that does not exist in the map", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
-				st.Idx(1, 1)
+			map[int]int{1: 2},
+			r.Map(func(st *MapTester) {
+				st.Key(42, 1)
 			}),
-			"past end of slice",
+			"does not exist in map",
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
@@ -182,24 +182,24 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: []int{1}, desc: "[]int"},
+				actual: &value{value: map[int]int{1: 2}, desc: "map[int]int"},
 				expect: nil,
-				op:     "[1]",
+				op:     "[42]",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
-						data:   "[1]",
-						callee: "detest.(*SliceTester).Idx",
-						caller: "detest.TestSlice.func5.1",
+						data:   "[42]",
+						callee: "detest.(*MapTester).Key",
+						caller: "detest.TestMap.func5.1",
 					},
 				},
 				where:       inDataStructure,
-				description: "Attempted to get an index (1) past the end of a 1-element slice",
+				description: "Attempted to get a map key that does not exist",
 			},
 			r.record[0].results[0],
 			"got the expected result",
@@ -210,8 +210,8 @@ func TestSlice(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		d.Is(
-			[]int{1, 2, 3},
-			d.Slice(func(st *SliceTester) {
+			map[int]int{1: 2, 2: 3, 3: 4},
+			d.Map(func(st *MapTester) {
 				st.AllValues(func(v int) bool {
 					return v < 5
 				})
@@ -227,8 +227,8 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1, 2, 6, 3},
-			r.Slice(func(st *SliceTester) {
+			map[int]int{1: 2, 2: 6, 3: 4},
+			r.Map(func(st *MapTester) {
 				st.AllValues(func(v int) bool {
 					return v < 5
 				})
@@ -237,26 +237,22 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 4, "record has state with four results")
+		assert.Len(t, r.record[0].results, 3, "record has state with four results")
 		AssertResultsAre(
 			t,
 			r.record[0].results,
 			[]resultExpect{
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[0]"},
-				},
-				{
-					pass:     true,
-					dataPath: []string{"[]int", "range", "[1]"},
+					dataPath: []string{"map[int]int", "range", "[1]"},
 				},
 				{
 					pass:     false,
-					dataPath: []string{"[]int", "range", "[2]"},
+					dataPath: []string{"map[int]int", "range", "[2]"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[3]"},
+					dataPath: []string{"map[int]int", "range", "[3]"},
 				},
 			},
 			"got expected results",
@@ -268,8 +264,8 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
+			map[int]int{1: 2},
+			r.Map(func(st *MapTester) {
 				st.AllValues(42)
 			}),
 			"AllValues not given a func",
@@ -280,20 +276,20 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: []int{1}, desc: "[]int"},
+				actual: &value{value: map[int]int{1: 2}, desc: "map[int]int"},
 				expect: nil,
 				op:     "",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
 						data:   "range",
-						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func8.1",
+						callee: "detest.(*MapTester).AllValues",
+						caller: "detest.TestMap.func8.1",
 					},
 				},
 				where:       inUsage,
@@ -309,8 +305,8 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
+			map[int]int{1: 2},
+			r.Map(func(st *MapTester) {
 				st.AllValues(func(x, y int) bool { return true })
 			}),
 			"AllValues func takes 2 values",
@@ -321,20 +317,20 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: []int{1}, desc: "[]int"},
+				actual: &value{value: map[int]int{1: 2}, desc: "map[int]int"},
 				expect: nil,
 				op:     "",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
 						data:   "range",
-						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func9.1",
+						callee: "detest.(*MapTester).AllValues",
+						caller: "detest.TestMap.func9.1",
 					},
 				},
 				where:       inUsage,
@@ -350,8 +346,8 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
+			map[int]int{1: 2},
+			r.Map(func(st *MapTester) {
 				st.AllValues(func(x int) (bool, error) { return true, nil })
 			}),
 			"AllValues func returns 2 values",
@@ -362,20 +358,20 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: []int{1}, desc: "[]int"},
+				actual: &value{value: map[int]int{1: 2}, desc: "map[int]int"},
 				expect: nil,
 				op:     "",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
 						data:   "range",
-						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func10.1",
+						callee: "detest.(*MapTester).AllValues",
+						caller: "detest.TestMap.func10.1",
 					},
 				},
 				where:       inUsage,
@@ -391,8 +387,8 @@ func TestSlice(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		r := NewRecorder(d)
 		r.Is(
-			[]int{1},
-			r.Slice(func(st *SliceTester) {
+			map[int]int{1: 2},
+			r.Map(func(st *MapTester) {
 				st.AllValues(func(x int) int { return 42 })
 			}),
 			"AllValues func returns int",
@@ -403,20 +399,20 @@ func TestSlice(t *testing.T) {
 		assert.Equal(
 			t,
 			result{
-				actual: &value{value: []int{1}, desc: "[]int"},
+				actual: &value{value: map[int]int{1: 2}, desc: "map[int]int"},
 				expect: nil,
 				op:     "",
 				pass:   false,
 				path: []Path{
 					{
-						data:   "[]int",
-						callee: "detest.(*D).Slice",
+						data:   "map[int]int",
+						callee: "detest.(*D).Map",
 						caller: "detest.(*DetestRecorder).Is",
 					},
 					{
 						data:   "range",
-						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func11.1",
+						callee: "detest.(*MapTester).AllValues",
+						caller: "detest.TestMap.func11.1",
 					},
 				},
 				where:       inUsage,
