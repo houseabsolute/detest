@@ -26,11 +26,11 @@ func Test3(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		[]int{1, 2, 3},
-		d.Slice(func(d *detest.D) {
-			d.Idx(0, d.Equal(1))
-			d.Idx(1, d.Equal(2))
-			d.Idx(2, d.Equal(4))
-			d.Idx(3, d.Equal(4))
+		d.Slice(func(st *detest.SliceTester) {
+			st.Idx(0, d.Equal(1))
+			st.Idx(1, d.Equal(2))
+			st.Idx(2, d.Equal(4))
+			st.Idx(3, d.Equal(4))
 		}),
 		"slice out of bounds",
 	)
@@ -40,10 +40,10 @@ func Test4(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		42,
-		d.Slice(func(d *detest.D) {
-			d.Idx(0, d.Equal(1))
-			d.Idx(1, d.Equal(2))
-			d.Idx(2, d.Equal(4))
+		d.Slice(func(st *detest.SliceTester) {
+			st.Idx(0, d.Equal(1))
+			st.Idx(1, d.Equal(2))
+			st.Idx(2, d.Equal(4))
 		}),
 		"slice value wrong",
 	)
@@ -53,10 +53,10 @@ func Test4_1(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		42,
-		d.Slice(func(d *detest.D) {
-			d.Idx(0, 1)
-			d.Idx(1, 1)
-			d.Idx(2, 3)
+		d.Slice(func(st *detest.SliceTester) {
+			st.Idx(0, 1)
+			st.Idx(1, 1)
+			st.Idx(2, 3)
 		}),
 		"slice compared to bare value",
 	)
@@ -66,16 +66,16 @@ func Test5(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		[][]int{{1, 2, 3}, {3, 4, 5}},
-		d.Slice(func(d *detest.D) {
-			d.Idx(0, d.Slice(func(d *detest.D) {
-				d.Idx(0, d.Equal(1))
-				d.Idx(1, d.Equal(2))
-				d.Idx(2, d.Equal(3))
+		d.Slice(func(st *detest.SliceTester) {
+			st.Idx(0, d.Slice(func(st *detest.SliceTester) {
+				st.Idx(0, d.Equal(1))
+				st.Idx(1, d.Equal(2))
+				st.Idx(2, d.Equal(3))
 			}))
-			d.Idx(1, d.Slice(func(d *detest.D) {
-				d.Idx(0, d.Equal(2))
-				d.Idx(1, d.Equal(4))
-				d.Idx(2, d.Equal(5))
+			st.Idx(1, d.Slice(func(st *detest.SliceTester) {
+				st.Idx(0, d.Equal(2))
+				st.Idx(1, d.Equal(4))
+				st.Idx(2, d.Equal(5))
 			}))
 		}),
 		"nested slice",
@@ -86,15 +86,15 @@ func Test6(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		[]int{1, 2, 3},
-		d.Slice(func(d *detest.D) {
-			d.AllSliceValues(func(v int) bool {
+		d.Slice(func(st *detest.SliceTester) {
+			st.AllValues(func(v int) bool {
 				return v > 2
 			})
-			d.Idx(0, d.Equal(1))
-			d.Idx(1, d.Equal(2))
-			d.Idx(2, d.Equal(4))
+			st.Idx(0, d.Equal(1))
+			st.Idx(1, d.Equal(2))
+			st.Idx(2, d.Equal(4))
 		}),
-		"AllSliceValues",
+		"slice AllValues",
 	)
 }
 
@@ -102,15 +102,15 @@ func Test7(t *testing.T) {
 	d := detest.New(t)
 	d.Is(
 		map[string]string{"foo": "bar", "baz": "buz", "quux": "fnord"},
-		d.Map(func(d *detest.D) {
-			d.AllMapValues(func(v string) bool {
+		d.Map(func(mt *detest.MapTester) {
+			mt.AllValues(func(v string) bool {
 				return len(v) <= 3
 			})
-			d.Key("foo", d.Equal("bar"))
-			d.Key("baz", d.Equal("buz"))
-			d.Key("quux", d.Equal("fnord!"))
+			mt.Key("foo", d.Equal("bar"))
+			mt.Key("baz", d.Equal("buz"))
+			mt.Key("quux", d.Equal("fnord!"))
 		}),
-		"AllMapValues",
+		"map AllValues",
 	)
 }
 
@@ -137,18 +137,18 @@ func Test8(t *testing.T) {
 
 	d.Is(
 		actual,
-		d.Map(func(d *detest.D) {
-			d.Key("foo", d.Slice(func(d *detest.D) {
-				d.Idx(0, d.Map(func(d *detest.D) {
-					d.Key("bar", d.Slice(func(d *detest.D) {
-						d.Idx(1, "buz")
-						d.Idx(2, "not quux")
+		d.Map(func(mt *detest.MapTester) {
+			mt.Key("foo", d.Slice(func(st *detest.SliceTester) {
+				st.Idx(0, d.Map(func(mt *detest.MapTester) {
+					mt.Key("bar", d.Slice(func(st *detest.SliceTester) {
+						st.Idx(1, "buz")
+						st.Idx(2, "not quux")
 					}))
 				}))
-				d.Idx(1, d.Map(func(d *detest.D) {
-					d.Key("nosuchkey", d.Slice(func(d *detest.D) {
-						d.Idx(1, "buz")
-						d.Idx(2, "not quux")
+				st.Idx(1, d.Map(func(mt *detest.MapTester) {
+					mt.Key("nosuchkey", d.Slice(func(st *detest.SliceTester) {
+						st.Idx(1, "buz")
+						st.Idx(2, "not quux")
 					}))
 				}))
 			}))
