@@ -86,52 +86,17 @@ func (st *SliceTester) AllValues(check interface{}) {
 	st.d.PushPath(st.d.NewPath("range", 0, ""))
 	defer st.d.PopPath()
 
-	v := reflect.ValueOf(check)
-	t := v.Type()
-	if v.Kind() != reflect.Func {
+	comparer, err := st.d.NamedFunc(check, "AllValues")
+	if err != nil {
 		st.d.AddResult(result{
 			actual:      newValue(st.d.Actual()),
 			pass:        false,
 			where:       inUsage,
-			description: fmt.Sprintf("You passed %s to AllValues but it needs a function", articleize(describeType(t))),
+			description: err.Error(),
 		})
 		return
 	}
 
-	if t.NumIn() != 1 {
-		st.d.AddResult(result{
-			actual:      newValue(st.d.Actual()),
-			pass:        false,
-			where:       inUsage,
-			description: fmt.Sprintf("The function passed to AllValues must take 1 value, but yours takes %d", t.NumIn()),
-		})
-		return
-	}
-
-	if t.NumOut() != 1 {
-		st.d.AddResult(result{
-			actual:      newValue(st.d.Actual()),
-			pass:        false,
-			where:       inUsage,
-			description: fmt.Sprintf("The function passed to AllValues must return 1 value, but yours returns %d", t.NumOut()),
-		})
-		return
-	}
-
-	if t.Out(0).Name() != "bool" {
-		st.d.AddResult(result{
-			actual: newValue(st.d.Actual()),
-			pass:   false,
-			where:  inUsage,
-			description: fmt.Sprintf(
-				"The function passed to AllValues must return a bool, but yours returns %s",
-				articleize(describeType(t.Out(0))),
-			),
-		})
-		return
-	}
-
-	comparer := FuncComparer{comparer: v}
 	array := reflect.ValueOf(st.d.Actual())
 	for i := 0; i < array.Len(); i++ {
 		st.Idx(i, comparer)

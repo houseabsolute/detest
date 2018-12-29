@@ -1,6 +1,8 @@
 package detest
 
 import (
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -237,7 +239,12 @@ func TestMap(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 3, "record has state with four results")
+		assert.Len(t, r.record[0].results, 3, "record has state with three results")
+		// Map iteration order is not predictable so if we don't sort the
+		// results it's a lot trickier to test that we got what we expected.
+		sort.SliceStable(r.record[0].results, func(i, j int) bool {
+			return r.record[0].results[i].path[2].data < r.record[0].results[j].path[2].data
+		})
 		AssertResultsAre(
 			t,
 			r.record[0].results,
@@ -256,6 +263,52 @@ func TestMap(t *testing.T) {
 				},
 			},
 			"got expected results",
+		)
+	})
+
+	t.Run("AllValues fail with description", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			map[int]int{1: 2, 2: 6, 3: 4},
+			r.Map(func(st *MapTester) {
+				st.AllValues(func(v int) (bool, string) {
+					return v < 5, fmt.Sprintf("expected a value less than 5 but got %d", v)
+				})
+			}),
+			"AllValues < 5",
+		)
+		mockT.AssertCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].results, 3, "record has state with three results")
+		sort.SliceStable(r.record[0].results, func(i, j int) bool {
+			return r.record[0].results[i].path[2].data < r.record[0].results[j].path[2].data
+		})
+		AssertResultsAre(
+			t,
+			r.record[0].results,
+			[]resultExpect{
+				{
+					pass:     true,
+					dataPath: []string{"map[int]int", "range", "[1]"},
+				},
+				{
+					pass:     false,
+					dataPath: []string{"map[int]int", "range", "[2]"},
+				},
+				{
+					pass:     true,
+					dataPath: []string{"map[int]int", "range", "[3]"},
+				},
+			},
+			"got expected results",
+		)
+		assert.Equal(
+			t,
+			r.record[0].results[1].description,
+			"expected a value less than 5 but got 6",
+			"AllValues func returns a string description",
 		)
 	})
 
@@ -289,7 +342,7 @@ func TestMap(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*MapTester).AllValues",
-						caller: "detest.TestMap.func8.1",
+						caller: "detest.TestMap.func9.1",
 					},
 				},
 				where:       inUsage,
@@ -330,7 +383,7 @@ func TestMap(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*MapTester).AllValues",
-						caller: "detest.TestMap.func9.1",
+						caller: "detest.TestMap.func10.1",
 					},
 				},
 				where:       inUsage,
@@ -371,11 +424,11 @@ func TestMap(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*MapTester).AllValues",
-						caller: "detest.TestMap.func10.1",
+						caller: "detest.TestMap.func11.1",
 					},
 				},
 				where:       inUsage,
-				description: "The function passed to AllValues must return 1 value, but yours returns 2",
+				description: "The function passed to AllValues must return a string as its second argument but it returns an error",
 			},
 			r.record[0].results[0],
 			"got expected results",
@@ -412,11 +465,11 @@ func TestMap(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*MapTester).AllValues",
-						caller: "detest.TestMap.func11.1",
+						caller: "detest.TestMap.func12.1",
 					},
 				},
 				where:       inUsage,
-				description: "The function passed to AllValues must return a bool, but yours returns an int",
+				description: "The function passed to AllValues must return a bool as its first argument but it returns an int",
 			},
 			r.record[0].results[0],
 			"got expected results",

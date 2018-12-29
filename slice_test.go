@@ -1,6 +1,7 @@
 package detest
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -263,6 +264,53 @@ func TestSlice(t *testing.T) {
 		)
 	})
 
+	t.Run("AllValues fail with description", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			[]int{1, 2, 6, 3},
+			r.Slice(func(st *SliceTester) {
+				st.AllValues(func(v int) (bool, string) {
+					return v < 5, fmt.Sprintf("expected a value less than 5 but got %d", v)
+				})
+			}),
+			"AllValues < 5",
+		)
+		mockT.AssertCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].results, 4, "record has state with four results")
+		AssertResultsAre(
+			t,
+			r.record[0].results,
+			[]resultExpect{
+				{
+					pass:     true,
+					dataPath: []string{"[]int", "range", "[0]"},
+				},
+				{
+					pass:     true,
+					dataPath: []string{"[]int", "range", "[1]"},
+				},
+				{
+					pass:     false,
+					dataPath: []string{"[]int", "range", "[2]"},
+				},
+				{
+					pass:     true,
+					dataPath: []string{"[]int", "range", "[3]"},
+				},
+			},
+			"got expected results",
+		)
+		assert.Equal(
+			t,
+			r.record[0].results[2].description,
+			"expected a value less than 5 but got 6",
+			"AllValues func returns a string description",
+		)
+	})
+
 	t.Run("AllValues not given a func", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
@@ -293,7 +341,7 @@ func TestSlice(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func8.1",
+						caller: "detest.TestSlice.func9.1",
 					},
 				},
 				where:       inUsage,
@@ -334,7 +382,7 @@ func TestSlice(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func9.1",
+						caller: "detest.TestSlice.func10.1",
 					},
 				},
 				where:       inUsage,
@@ -375,11 +423,11 @@ func TestSlice(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func10.1",
+						caller: "detest.TestSlice.func11.1",
 					},
 				},
 				where:       inUsage,
-				description: "The function passed to AllValues must return 1 value, but yours returns 2",
+				description: "The function passed to AllValues must return a string as its second argument but it returns an error",
 			},
 			r.record[0].results[0],
 			"got expected results",
@@ -416,11 +464,11 @@ func TestSlice(t *testing.T) {
 					{
 						data:   "range",
 						callee: "detest.(*SliceTester).AllValues",
-						caller: "detest.TestSlice.func11.1",
+						caller: "detest.TestSlice.func12.1",
 					},
 				},
 				where:       inUsage,
-				description: "The function passed to AllValues must return a bool, but yours returns an int",
+				description: "The function passed to AllValues must return a bool as its first argument but it returns an int",
 			},
 			r.record[0].results[0],
 			"got expected results",
