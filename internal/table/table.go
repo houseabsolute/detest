@@ -79,7 +79,12 @@ func (t *Table) Render(style style.Style) (string, error) {
 		fmt.Fprintf(os.Stderr, "  %d footer row(s)\n", len(t.footer))
 	}
 
-	ri := builder.BuildRenderInfo(t.allRows())
+	rowsWithTitle := []*row.Row{}
+	if t.title != "" {
+		rowsWithTitle = append(rowsWithTitle, t.titleRow())
+	}
+	rowsWithTitle = append(rowsWithTitle, t.allRows()...)
+	ri := builder.BuildRenderInfo(rowsWithTitle)
 	items := t.rowsWithSeparators()
 	rendered := ""
 	for j, item := range items {
@@ -107,14 +112,18 @@ func (t *Table) Render(style style.Style) (string, error) {
 	return rendered, nil
 }
 
+func (t *Table) titleRow() *row.Row {
+	title := row.New()
+	title.AddCell(cell.NewWithParams(t.title, t.maxCells(), cell.AlignCenter))
+	return title
+}
+
 func (t *Table) rowsWithSeparators() []interface{} {
 	rows := []interface{}{}
 	rows = append(rows, Separator{sepType: Start})
 
 	if t.title != "" {
-		title := row.New()
-		title.AddCell(cell.NewWithParams(t.title, t.maxCells(), cell.AlignCenter))
-		rows = append(rows, title)
+		rows = append(rows, t.titleRow())
 		rows = append(rows, Separator{sepType: AfterTitle})
 	}
 

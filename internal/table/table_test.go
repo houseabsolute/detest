@@ -258,7 +258,25 @@ var tests = []testCase{
 │                                  │ string │ quux  │ == │ string │ not quux │
 ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━┷━━━━━━━┷━━━━┷━━━━━━━━┷━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
 `,
-		name: "table multiple headers, multiple body rows, and cells with >1 col span",
+		name: "table with multiple headers, multiple body rows, and cells with >1 col span",
+	},
+	{
+		title: "Title is longer than cell contents in the body",
+		body: []testRow{
+			{
+				{content: "C1"},
+				{content: "C2"},
+				{content: "C3"},
+			},
+		},
+		expect: `
+┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
+│  Title is longer than cell contents in the body  │
+┝━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━┥
+│ C1             │ C2             │ C3             │
+┕━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━┙
+`,
+		name: "table where title is longer than all other cells combined",
 	},
 }
 
