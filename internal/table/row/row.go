@@ -80,12 +80,8 @@ func (r *Row) Render(ri renderinfo.RI, sty style.Style) (string, error) {
 		if debug.Debug {
 			fmt.Fprintf(os.Stderr, "    cell %d spans from column %d to %d (cs: %d)\n", i, from, to, c.ColSpan)
 		}
-		if from == to {
-			w = ri.ColumnWidth(from)
-		} else {
-			for x := from; x <= to; x++ {
-				w += ri.ColumnWidth(x)
-			}
+		for x := from; x <= to; x++ {
+			w += ri.ColumnWidth(x)
 		}
 		// We need to add one more for each separator that the cell spans.
 		w += (c.ColSpan - 1)
