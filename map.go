@@ -103,7 +103,7 @@ func (mt *MapTester) AllValues(check interface{}) {
 	mt.d.PushPath(mt.d.NewPath("range", 0, ""))
 	defer mt.d.PopPath()
 
-	comparer, err := mt.d.NamedFunc(check, "AllValues")
+	comparer, err := mt.d.FuncFor(check, "AllValues")
 	if err != nil {
 		mt.d.AddResult(result{
 			actual:      newValue(mt.d.Actual()),

@@ -245,19 +245,19 @@ func TestSlice(t *testing.T) {
 			[]resultExpect{
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[0]"},
+					dataPath: []string{"[]int", "range", "[0]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[1]"},
+					dataPath: []string{"[]int", "range", "[1]", "int"},
 				},
 				{
 					pass:     false,
-					dataPath: []string{"[]int", "range", "[2]"},
+					dataPath: []string{"[]int", "range", "[2]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[3]"},
+					dataPath: []string{"[]int", "range", "[3]", "int"},
 				},
 			},
 			"got expected results",
@@ -286,19 +286,19 @@ func TestSlice(t *testing.T) {
 			[]resultExpect{
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[0]"},
+					dataPath: []string{"[]int", "range", "[0]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[1]"},
+					dataPath: []string{"[]int", "range", "[1]", "int"},
 				},
 				{
 					pass:     false,
-					dataPath: []string{"[]int", "range", "[2]"},
+					dataPath: []string{"[]int", "range", "[2]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"[]int", "range", "[3]"},
+					dataPath: []string{"[]int", "range", "[3]", "int"},
 				},
 			},
 			"got expected results",
@@ -426,8 +426,9 @@ func TestSlice(t *testing.T) {
 						caller: "detest.TestSlice.func11.1",
 					},
 				},
-				where:       inUsage,
-				description: "The function passed to AllValues must return a string as its second argument but it returns an error",
+				where: inUsage,
+				description: "The function passed to AllValues must return a string as its" +
+					" second argument but yours returns an error",
 			},
 			r.record[0].results[0],
 			"got expected results",
@@ -467,8 +468,9 @@ func TestSlice(t *testing.T) {
 						caller: "detest.TestSlice.func12.1",
 					},
 				},
-				where:       inUsage,
-				description: "The function passed to AllValues must return a bool as its first argument but it returns an int",
+				where: inUsage,
+				description: "The function passed to AllValues must return a bool as its" +
+					" first argument but yours returns an int",
 			},
 			r.record[0].results[0],
 			"got expected results",

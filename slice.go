@@ -86,7 +86,7 @@ func (st *SliceTester) AllValues(check interface{}) {
 	st.d.PushPath(st.d.NewPath("range", 0, ""))
 	defer st.d.PopPath()
 
-	comparer, err := st.d.NamedFunc(check, "AllValues")
+	comparer, err := st.d.FuncFor(check, "AllValues")
 	if err != nil {
 		st.d.AddResult(result{
 			actual:      newValue(st.d.Actual()),

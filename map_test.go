@@ -251,15 +251,15 @@ func TestMap(t *testing.T) {
 			[]resultExpect{
 				{
 					pass:     true,
-					dataPath: []string{"map[int]int", "range", "[1]"},
+					dataPath: []string{"map[int]int", "range", "[1]", "int"},
 				},
 				{
 					pass:     false,
-					dataPath: []string{"map[int]int", "range", "[2]"},
+					dataPath: []string{"map[int]int", "range", "[2]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"map[int]int", "range", "[3]"},
+					dataPath: []string{"map[int]int", "range", "[3]", "int"},
 				},
 			},
 			"got expected results",
@@ -291,15 +291,15 @@ func TestMap(t *testing.T) {
 			[]resultExpect{
 				{
 					pass:     true,
-					dataPath: []string{"map[int]int", "range", "[1]"},
+					dataPath: []string{"map[int]int", "range", "[1]", "int"},
 				},
 				{
 					pass:     false,
-					dataPath: []string{"map[int]int", "range", "[2]"},
+					dataPath: []string{"map[int]int", "range", "[2]", "int"},
 				},
 				{
 					pass:     true,
-					dataPath: []string{"map[int]int", "range", "[3]"},
+					dataPath: []string{"map[int]int", "range", "[3]", "int"},
 				},
 			},
 			"got expected results",
@@ -427,8 +427,9 @@ func TestMap(t *testing.T) {
 						caller: "detest.TestMap.func11.1",
 					},
 				},
-				where:       inUsage,
-				description: "The function passed to AllValues must return a string as its second argument but it returns an error",
+				where: inUsage,
+				description: "The function passed to AllValues must return a string as its" +
+					" second argument but yours returns an error",
 			},
 			r.record[0].results[0],
 			"got expected results",
@@ -468,8 +469,9 @@ func TestMap(t *testing.T) {
 						caller: "detest.TestMap.func12.1",
 					},
 				},
-				where:       inUsage,
-				description: "The function passed to AllValues must return a bool as its first argument but it returns an int",
+				where: inUsage,
+				description: "The function passed to AllValues must return a bool as its" +
+					" first argument but yours returns an int",
 			},
 			r.record[0].results[0],
 			"got expected results",
