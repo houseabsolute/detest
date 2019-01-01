@@ -31,10 +31,15 @@ type Path struct {
 	caller string
 }
 
+type outputItem struct {
+	result  *result
+	warning string
+}
+
 type state struct {
-	results []result
-	actual  []interface{}
-	path    []Path
+	output []outputItem
+	actual []interface{}
+	path   []Path
 }
 
 // Comparer is the interface for anything that implements the `Compare`
@@ -252,20 +257,35 @@ func (d *D) AddResult(r result) {
 	// We want to make a new slice since d.state.path could get pushed and
 	// popped after this result is saved.
 	r.path = append(r.path, d.state.path...)
-	d.state.results = append(d.state.results, r)
+	d.state.output = append(d.state.output, outputItem{result: &r})
+}
+
+// AddWarning adds a warning. At the end of a test these warnings will be
+// displayed. Note that adding a warning does not cause the test to fail.
+func (d *D) AddWarning(w string) {
+	d.state.output = append(d.state.output, outputItem{warning: w})
 }
 
 func (d *D) ok(name string) bool {
 	pass := true
-	for _, r := range d.state.results {
+	for _, o := range d.state.output {
 		var err error
-		if r.pass {
-			_, err = d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
+		// nolint: gocritic
+		if o.result != nil {
+			if o.result.pass {
+				_, err = d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
+			} else {
+				pass = false
+				d.t.Fail()
+				_, err = d.output.WriteString(o.result.describe(name, ansi.DefaultScheme))
+			}
+		} else if o.warning != "" {
+			msg := ansi.DefaultScheme.Warning(o.warning)
+			_, err = d.output.WriteString(msg)
 		} else {
-			pass = false
-			d.t.Fail()
-			_, err = d.output.WriteString(r.describe(name, ansi.DefaultScheme))
+			panic("We have an output which does not have a result or a warning. That should never happen.")
 		}
+
 		if err != nil {
 			panic(err)
 		}

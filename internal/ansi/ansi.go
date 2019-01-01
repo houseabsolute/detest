@@ -6,12 +6,14 @@ type Scheme struct {
 	Strong    func(string) string
 	Correct   func(string) string
 	Incorrect func(string) string
+	Warning   func(string) string
 }
 
 var DefaultScheme = Scheme{
 	Strong:    bold,
 	Correct:   green,
 	Incorrect: red,
+	Warning:   orange,
 }
 
 const endEscape = "\033[0m"
@@ -26,6 +28,10 @@ func green(s string) string {
 
 func red(s string) string {
 	return "\033[38:5:9m" + s + endEscape
+}
+
+func orange(s string) string {
+	return "\033[38:5:214m" + s + endEscape
 }
 
 // Copied from github.com/apcera/termtables/cell.go with a fix to allow a

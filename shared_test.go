@@ -104,14 +104,14 @@ type resultExpect struct {
 	dataPath []string
 }
 
-func AssertResultsAre(t *testing.T, actual []result, expect []resultExpect, name string) {
+func AssertResultsAre(t *testing.T, actual []outputItem, expect []resultExpect, name string) {
 	if assert.Len(t, actual, len(expect), "got %d result(s)", len(expect)) {
 		for i := range expect {
 			i := i
 			t.Run(fmt.Sprintf("results[%d]", i), func(t *testing.T) {
-				assert.Equal(t, expect[i].pass, actual[i].pass, "got expected pass", i)
+				assert.Equal(t, expect[i].pass, actual[i].result.pass, "got expected pass", i)
 				dataPath := []string{}
-				for _, p := range actual[i].path {
+				for _, p := range actual[i].result.path {
 					dataPath = append(dataPath, p.data)
 				}
 				assert.Equal(t, expect[i].dataPath, dataPath, "got expected data path")

@@ -39,10 +39,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: 1, desc: "int"},
 				expect: &value{value: 2, desc: "int"},
 				op:     "==",
@@ -67,7 +67,7 @@ func TestSlice(t *testing.T) {
 				where:       inValue,
 				description: "",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got the expected result",
 		)
 	})
@@ -87,16 +87,16 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 3, "record has state with three results")
+		assert.Len(t, r.record[0].output, 3, "record has state with three output items")
 		assert.Equal(
 			t,
 			true,
-			r.record[0].results[0].pass,
+			r.record[0].output[0].result.pass,
 			"first result was a pass",
 		)
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: 2, desc: "int"},
 				expect: &value{value: 3, desc: "int"},
 				op:     "==",
@@ -121,13 +121,13 @@ func TestSlice(t *testing.T) {
 				where:       inValue,
 				description: "",
 			},
-			r.record[0].results[1],
+			r.record[0].output[1].result,
 			"got the expected second result",
 		)
 		assert.Equal(
 			t,
 			true,
-			r.record[0].results[2].pass,
+			r.record[0].output[2].result.pass,
 			"third result was a pass",
 		)
 	})
@@ -145,10 +145,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: 42, desc: "int"},
 				expect: nil,
 				op:     "[]",
@@ -161,7 +161,7 @@ func TestSlice(t *testing.T) {
 				where:       inDataStructure,
 				description: "Called detest.Slice() but the value being tested isn't a slice, it's an int",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got the expected result",
 		)
 	})
@@ -179,10 +179,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: []int{1}, desc: "[]int"},
 				expect: nil,
 				op:     "[1]",
@@ -202,7 +202,7 @@ func TestSlice(t *testing.T) {
 				where:       inDataStructure,
 				description: "Attempted to get an index (1) past the end of a 1-element slice",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got the expected result",
 		)
 	})
@@ -238,10 +238,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 4, "record has state with four results")
+		assert.Len(t, r.record[0].output, 4, "record has state with four output items")
 		AssertResultsAre(
 			t,
-			r.record[0].results,
+			r.record[0].output,
 			[]resultExpect{
 				{
 					pass:     true,
@@ -279,10 +279,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 4, "record has state with four results")
+		assert.Len(t, r.record[0].output, 4, "record has state with four output items")
 		AssertResultsAre(
 			t,
-			r.record[0].results,
+			r.record[0].output,
 			[]resultExpect{
 				{
 					pass:     true,
@@ -305,7 +305,7 @@ func TestSlice(t *testing.T) {
 		)
 		assert.Equal(
 			t,
-			r.record[0].results[2].description,
+			r.record[0].output[2].result.description,
 			"expected a value less than 5 but got 6",
 			"AllValues func returns a string description",
 		)
@@ -324,10 +324,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: []int{1}, desc: "[]int"},
 				expect: nil,
 				op:     "",
@@ -347,7 +347,7 @@ func TestSlice(t *testing.T) {
 				where:       inUsage,
 				description: "You passed an int to AllValues but it needs a function",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got expected results",
 		)
 	})
@@ -365,10 +365,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: []int{1}, desc: "[]int"},
 				expect: nil,
 				op:     "",
@@ -388,7 +388,7 @@ func TestSlice(t *testing.T) {
 				where:       inUsage,
 				description: "The function passed to AllValues must take 1 value, but yours takes 2",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got expected results",
 		)
 	})
@@ -406,10 +406,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: []int{1}, desc: "[]int"},
 				expect: nil,
 				op:     "",
@@ -430,7 +430,7 @@ func TestSlice(t *testing.T) {
 				description: "The function passed to AllValues must return a string as its" +
 					" second argument but yours returns an error",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got expected results",
 		)
 	})
@@ -448,10 +448,10 @@ func TestSlice(t *testing.T) {
 		)
 		mockT.AssertCalled(t, "Fail")
 		assert.Len(t, r.record, 1, "one state was recorded")
-		assert.Len(t, r.record[0].results, 1, "record has state with one result")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 		assert.Equal(
 			t,
-			result{
+			&result{
 				actual: &value{value: []int{1}, desc: "[]int"},
 				expect: nil,
 				op:     "",
@@ -472,7 +472,7 @@ func TestSlice(t *testing.T) {
 				description: "The function passed to AllValues must return a bool as its" +
 					" first argument but yours returns an int",
 			},
-			r.record[0].results[0],
+			r.record[0].output[0].result,
 			"got expected results",
 		)
 	})
