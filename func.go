@@ -42,25 +42,25 @@ func (d *D) newFunc(with interface{}, name, called string) (FuncComparer, error)
 	t := v.Type()
 	if v.Kind() != reflect.Func {
 		return FuncComparer{},
-			fmt.Errorf("You passed %s to %s but it needs a function", articleize(describeType(t)), called)
+			fmt.Errorf("you passed %s to %s but it needs a function", articleize(describeType(t)), called)
 	}
 
 	if t.NumIn() != 1 {
 		return FuncComparer{},
-			fmt.Errorf("The function passed to %s must take 1 value, but yours takes %d", called, t.NumIn())
+			fmt.Errorf("the function passed to %s must take 1 value, but yours takes %d", called, t.NumIn())
 	}
 	if !(t.NumOut() == 1 || t.NumOut() == 2) {
 		return FuncComparer{},
-			fmt.Errorf("The function passed to %s must return 1 or 2 values, but yours returns %d", called, t.NumOut())
+			fmt.Errorf("the function passed to %s must return 1 or 2 values, but yours returns %d", called, t.NumOut())
 	}
 	if t.Out(0).Kind() != reflect.Bool {
 		return FuncComparer{},
-			fmt.Errorf("The function passed to %s must return a bool as its first argument but yours returns %s",
+			fmt.Errorf("the function passed to %s must return a bool as its first argument but yours returns %s",
 				called, articleize(describeType(t.Out(0))))
 	}
 	if t.NumOut() == 2 && t.Out(1).Kind() != reflect.String {
 		return FuncComparer{},
-			fmt.Errorf("The function passed to %s must return a string as its second argument but yours returns %s",
+			fmt.Errorf("the function passed to %s must return a string as its second argument but yours returns %s",
 				called, articleize(describeType(t.Out(1))))
 	}
 

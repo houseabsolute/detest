@@ -46,7 +46,7 @@ func NewWithParams(content string, span int, alignment Alignment) *Cell {
 
 func (c *Cell) Render(width int, sty style.Style) (string, error) {
 	if width < c.DisplayWidth() {
-		return "", fmt.Errorf("Cell needs width of %d but was only allowed %d", c.DisplayWidth(), width)
+		return "", fmt.Errorf("cell needs width of %d but was only allowed %d", c.DisplayWidth(), width)
 	}
 
 	return c.pad(sty, width), nil

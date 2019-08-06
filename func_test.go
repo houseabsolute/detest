@@ -238,7 +238,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"You passed an int to detest.Func() but it needs a function",
+			"you passed an int to detest.Func() but it needs a function",
 			"passed an int to Func()",
 		)
 
@@ -246,7 +246,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"You passed an int to detest.NamedFunc() but it needs a function",
+			"you passed an int to detest.NamedFunc() but it needs a function",
 			"passed an int to NamedFunc()",
 		)
 
@@ -254,7 +254,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"The function passed to detest.Func() must take 1 value, but yours takes 2",
+			"the function passed to detest.Func() must take 1 value, but yours takes 2",
 			"function takes 2 arguments",
 		)
 
@@ -262,7 +262,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"The function passed to detest.Func() must return 1 or 2 values, but yours returns 0",
+			"the function passed to detest.Func() must return 1 or 2 values, but yours returns 0",
 			"function returns 0 arguments",
 		)
 
@@ -270,7 +270,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"The function passed to detest.Func() must return 1 or 2 values, but yours returns 3",
+			"the function passed to detest.Func() must return 1 or 2 values, but yours returns 3",
 			"function returns 3 arguments",
 		)
 
@@ -278,7 +278,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"The function passed to detest.Func() must return a bool as its first argument but yours returns an int",
+			"the function passed to detest.Func() must return a bool as its first argument but yours returns an int",
 			"function returns an int instead of a bool",
 		)
 
@@ -286,7 +286,7 @@ func TestFunc(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			"The function passed to detest.Func() must return a string as its second argument but yours returns an int",
+			"the function passed to detest.Func() must return a string as its second argument but yours returns an int",
 			"function returns an int instead of a string",
 		)
 	})

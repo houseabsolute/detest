@@ -352,7 +352,7 @@ func TestSlice(t *testing.T) {
 					},
 				},
 				where:       inUsage,
-				description: "You passed an int to AllValues but it needs a function",
+				description: "you passed an int to AllValues but it needs a function",
 			},
 			r.record[0].output[0].result,
 			"got expected results",
@@ -394,7 +394,7 @@ func TestSlice(t *testing.T) {
 					},
 				},
 				where:       inUsage,
-				description: "The function passed to AllValues must take 1 value, but yours takes 2",
+				description: "the function passed to AllValues must take 1 value, but yours takes 2",
 			},
 			r.record[0].output[0].result,
 			"got expected results",
@@ -436,7 +436,7 @@ func TestSlice(t *testing.T) {
 					},
 				},
 				where: inUsage,
-				description: "The function passed to AllValues must return a string as its" +
+				description: "the function passed to AllValues must return a string as its" +
 					" second argument but yours returns an error",
 			},
 			r.record[0].output[0].result,
@@ -478,7 +478,7 @@ func TestSlice(t *testing.T) {
 					},
 				},
 				where: inUsage,
-				description: "The function passed to AllValues must return a bool as its" +
+				description: "the function passed to AllValues must return a bool as its" +
 					" first argument but yours returns an int",
 			},
 			r.record[0].output[0].result,

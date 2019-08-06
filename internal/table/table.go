@@ -61,7 +61,7 @@ func maybeMakeRow(cells ...interface{}) *row.Row {
 
 func (t *Table) Render(style style.Style) (string, error) {
 	if len(t.body) == 0 {
-		return "", errors.New("Cannot render a table without a body")
+		return "", errors.New("cannot render a table without a body")
 	}
 
 	if debug.Debug {

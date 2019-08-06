@@ -87,7 +87,7 @@ func (s Separator) base(_ renderinfo.RI) (rune, rune, rune, error) {
 		return border.TableBottomLeft.Rune(), border.HorizontalHeavy.Rune(), border.TableBottomRight.Rune(), nil
 	}
 
-	return 0, 0, 0, errors.New("Unknown separator type")
+	return 0, 0, 0, errors.New("unknown separator type")
 }
 
 func (s Separator) isHeavy() bool {
