@@ -66,10 +66,10 @@ type StringWriter interface {
 // D contains state for the current set of tests. You should create a new `D`
 // in every `Test*` function or subtest.
 type D struct {
-	t             TestingT
-	callerPackage string
-	state         *state
-	output        StringWriter
+	t                 TestingT
+	callerPackageRoot string
+	state             *state
+	output            StringWriter
 }
 
 var ourPackages = map[string]bool{}
@@ -113,9 +113,9 @@ func packageFromFrame(frame runtime.Frame) string {
 // `*detest.D`. A `*D` created this way will send its output to `os.Stdout`.
 func New(t TestingT) *D {
 	return &D{
-		t:             t,
-		callerPackage: packageFromFrame(findFrame(1)),
-		output:        os.Stdout,
+		t:                 t,
+		callerPackageRoot: filepath.Dir(findFrame(1).File),
+		output:            os.Stdout,
 	}
 }
 
@@ -207,26 +207,12 @@ func (d *D) callerFromFrame(frame runtime.Frame) string {
 		return funcNameRE.ReplaceAllLiteralString(frame.Function, "")
 	}
 
-	gopath := os.Getenv("GOPATH")
-	if gopath == "" {
-		gopath = filepath.Join(os.Getenv("HOME"), "go")
-	}
-
 	file := frame.File
-	for _, p := range strings.Split(gopath, ":") {
-		src := filepath.Join(p, "src")
-		if strings.HasPrefix(file, src) {
-			// We want to remove the remaining separator character that's left
-			// after the trim.
-			file = strings.TrimPrefix(frame.File, src)[1:]
-			break
-		}
-	}
 	// If the caller is in the package that created our *D then we can strip
 	// that from the caller path and just show a path relative to the package
 	// root.
-	if strings.HasPrefix(file, d.callerPackage) {
-		file = strings.TrimPrefix(file, d.callerPackage)[1:]
+	if strings.HasPrefix(file, d.callerPackageRoot) {
+		file = strings.TrimPrefix(file, d.callerPackageRoot)[1:]
 	}
 
 	return fmt.Sprintf("%s@%d", file, frame.Line)
