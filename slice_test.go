@@ -19,6 +19,7 @@ func TestSlice(t *testing.T) {
 			[]int{1},
 			d.Slice(func(st *SliceTester) {
 				st.Idx(0, 1)
+				st.End()
 			}),
 			"slice[0] == 1",
 		)
@@ -34,6 +35,7 @@ func TestSlice(t *testing.T) {
 			[]int{1},
 			r.Slice(func(st *SliceTester) {
 				st.Idx(0, 2)
+				st.End()
 			}),
 			"slice[0] == 2",
 		)
@@ -82,6 +84,7 @@ func TestSlice(t *testing.T) {
 				st.Idx(0, 1)
 				st.Idx(1, 3)
 				st.Idx(2, 3)
+				st.End()
 			}),
 			"slice mix",
 		)
@@ -140,6 +143,7 @@ func TestSlice(t *testing.T) {
 			42,
 			r.Slice(func(st *SliceTester) {
 				st.Idx(0, 1)
+				st.End()
 			}),
 			"non-slice",
 		)
@@ -216,6 +220,7 @@ func TestSlice(t *testing.T) {
 				st.AllValues(func(v int) bool {
 					return v < 5
 				})
+				st.End()
 			}),
 			"AllValues < 5",
 		)
@@ -233,6 +238,7 @@ func TestSlice(t *testing.T) {
 				st.AllValues(func(v int) bool {
 					return v < 5
 				})
+				st.End()
 			}),
 			"AllValues < 5",
 		)
@@ -274,6 +280,7 @@ func TestSlice(t *testing.T) {
 				st.AllValues(func(v int) (bool, string) {
 					return v < 5, fmt.Sprintf("expected a value less than 5 but got %d", v)
 				})
+				st.End()
 			}),
 			"AllValues < 5",
 		)
@@ -360,6 +367,7 @@ func TestSlice(t *testing.T) {
 			[]int{1},
 			r.Slice(func(st *SliceTester) {
 				st.AllValues(func(x, y int) bool { return true })
+				st.End()
 			}),
 			"AllValues func takes 2 values",
 		)
@@ -401,6 +409,7 @@ func TestSlice(t *testing.T) {
 			[]int{1},
 			r.Slice(func(st *SliceTester) {
 				st.AllValues(func(x int) (bool, error) { return true, nil })
+				st.End()
 			}),
 			"AllValues func returns 2 values",
 		)

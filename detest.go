@@ -266,6 +266,15 @@ func (d *D) AddWarning(w string) {
 	d.state.output = append(d.state.output, outputItem{warning: w})
 }
 
+// LastResult returns the last result added, if one exists.
+func (d *D) lastResultIsValueError() bool {
+	if len(d.state.output) == 0 {
+		return false
+	}
+
+	return d.state.output[len(d.state.output)-1].result.where == inValue
+}
+
 func (d *D) ok(name string) bool {
 	pass := true
 	for _, o := range d.state.output {

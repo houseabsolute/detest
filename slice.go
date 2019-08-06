@@ -20,7 +20,9 @@ func (d *D) Slice(with func(*SliceTester)) SliceComparer {
 // to detest.Slice. This struct implements the slice-specific testing methods
 // such as Idx() and AllValues().
 type SliceTester struct {
-	d *D
+	d      *D
+	ending CollectionEnding
+	seen   map[int]bool
 }
 
 // Compare compares the slice value in d.Actual() by calling the function
@@ -45,7 +47,9 @@ func (sc SliceComparer) Compare(d *D) {
 		return
 	}
 
-	sc.with(&SliceTester{d})
+	st := &SliceTester{d: d, seen: map[int]bool{}}
+	defer st.enforceEnding()
+	sc.with(st)
 }
 
 // Idx takes a slice index and an expected value for that index. If the index
@@ -70,6 +74,8 @@ func (st *SliceTester) Idx(idx int, expect interface{}) {
 
 	st.d.PushActual(v.Index(idx).Interface())
 	defer st.d.PopActual()
+
+	st.seen[idx] = true
 
 	if c, ok := expect.(Comparer); ok {
 		c.Compare(st.d)
@@ -100,5 +106,44 @@ func (st *SliceTester) AllValues(check interface{}) {
 	array := reflect.ValueOf(st.d.Actual())
 	for i := 0; i < array.Len(); i++ {
 		st.Idx(i, comparer)
+	}
+}
+
+// Etc means that not all elements of the slice will be tested.
+func (st *SliceTester) Etc() {
+	st.ending = Etc
+}
+
+// End means that all elements of the slice must be tested or else the test
+// will fail.
+func (st *SliceTester) End() {
+	st.ending = End
+}
+
+func (st *SliceTester) enforceEnding() {
+	// If we got an error in anything but a value check that means the test
+	// aborted. This could mean attempting to get an index past the end of the
+	// slice, passing an incorrect type to AllValues, etc.
+	if !st.d.lastResultIsValueError() {
+		return
+	}
+
+	if st.ending == Etc {
+		return
+	}
+
+	if st.ending == Unset {
+		st.d.AddWarning("The function passed to Slice() did not call Etc() or End()")
+		return
+	}
+
+	for i := 0; i < reflect.ValueOf(st.d.Actual()).Len(); i++ {
+		if !st.seen[i] {
+			st.d.AddResult(result{
+				pass:        false,
+				where:       inUsage,
+				description: fmt.Sprintf("Your slice test did not check index %d", i),
+			})
+		}
 	}
 }
