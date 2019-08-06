@@ -31,7 +31,7 @@ func red(s string) string {
 }
 
 func orange(s string) string {
-	return "\033[38:5:214m" + s + endEscape
+	return "\033[38:5:208m" + s + endEscape
 }
 
 // Copied from github.com/apcera/termtables/cell.go with a fix to allow a
