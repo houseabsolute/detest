@@ -67,7 +67,7 @@ func TestFunc(t *testing.T) {
 					{
 						data:   "[]int",
 						callee: "Func()",
-						caller: "detest.(*D).Is",
+						caller: "detest.(*DetestRecorder).Is",
 					},
 				},
 				where:       inValue,
@@ -105,7 +105,7 @@ func TestFunc(t *testing.T) {
 					{
 						data:   "[]int",
 						callee: "Has a name",
-						caller: "detest.(*D).Is",
+						caller: "detest.(*DetestRecorder).Is",
 					},
 				},
 				where:       inValue,
@@ -143,7 +143,7 @@ func TestFunc(t *testing.T) {
 					{
 						data:   "[]int",
 						callee: "Func()",
-						caller: "detest.(*D).Is",
+						caller: "detest.(*DetestRecorder).Is",
 					},
 				},
 				where:       inValue,
@@ -181,7 +181,7 @@ func TestFunc(t *testing.T) {
 					{
 						data:   "[]int",
 						callee: "Has a name",
-						caller: "detest.(*D).Is",
+						caller: "detest.(*DetestRecorder).Is",
 					},
 				},
 				where:       inValue,
@@ -219,7 +219,7 @@ func TestFunc(t *testing.T) {
 					{
 						data:   "int",
 						callee: "Has a name",
-						caller: "detest.(*D).Is",
+						caller: "detest.(*DetestRecorder).Is",
 					},
 				},
 				where:       inUsage,
