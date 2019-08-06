@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/houseabsolute/detest/internal/ansi"
+	"github.com/houseabsolute/detest/internal/table"
+	"github.com/houseabsolute/detest/internal/table/style"
 )
 
 type failure int
@@ -277,6 +279,8 @@ func (d *D) lastResultIsValueError() bool {
 
 func (d *D) ok(name string) bool {
 	pass := true
+	scheme := ansi.DefaultScheme
+
 	for _, o := range d.state.output {
 		var err error
 		// nolint: gocritic
@@ -286,11 +290,16 @@ func (d *D) ok(name string) bool {
 			} else {
 				pass = false
 				d.t.Fail()
-				_, err = d.output.WriteString(o.result.describe(name, ansi.DefaultScheme))
+				_, err = d.output.WriteString(o.result.describe(name, scheme))
 			}
 		} else if o.warning != "" {
-			msg := ansi.DefaultScheme.Warning(o.warning)
-			_, err = d.output.WriteString(msg)
+			t := table.NewWithTitle(scheme.Strong("Warning"))
+			t.AddRow(scheme.Warning(o.warning))
+			var r string
+			r, err = t.Render(style.Default)
+			if err == nil {
+				_, err = d.output.WriteString(r)
+			}
 		} else {
 			panic("We have an output which does not have a result or a warning. That should never happen.")
 		}
