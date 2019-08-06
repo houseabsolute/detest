@@ -1,0 +1,8 @@
+## Add tests for End/Etc stuff in maps & slices
+
+## Add testers
+
+* arrays (can reuse slice bits somehow)?
+* structs
+* channels?
+* other things?
