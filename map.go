@@ -2,6 +2,7 @@ package detest
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 )
 
@@ -20,7 +21,9 @@ func (d *D) Map(with func(*MapTester)) MapComparer {
 // detest.Map. This struct implements the map-specific testing methods such as
 // Idx() and AllValues().
 type MapTester struct {
-	d *D
+	d      *D
+	ending CollectionEnding
+	seen   map[interface{}]bool
 }
 
 // Compare compares the map value in d.Actual() by calling the function passed
@@ -46,7 +49,9 @@ func (mc MapComparer) Compare(d *D) {
 		return
 	}
 
-	mc.with(&MapTester{d})
+	mt := &MapTester{d: d, seen: map[interface{}]bool{}}
+	defer mt.enforceEnding()
+	mc.with(mt)
 }
 
 // Key takes a key and an expected value for that key. If the key does not
@@ -88,6 +93,8 @@ func (mt *MapTester) Key(key interface{}, expect interface{}) {
 	mt.d.PushActual(found.Interface())
 	defer mt.d.PopActual()
 
+	mt.seen[key] = true
+
 	if c, ok := expect.(Comparer); ok {
 		c.Compare(mt.d)
 	} else {
@@ -117,5 +124,45 @@ func (mt *MapTester) AllValues(check interface{}) {
 	mapVal := reflect.ValueOf(mt.d.Actual())
 	for _, k := range mapVal.MapKeys() {
 		mt.Key(k.Interface(), comparer)
+	}
+}
+
+// Etc means that not all elements of the map will be tested.
+func (mt *MapTester) Etc() {
+	mt.ending = Etc
+}
+
+// End means that all elements of the map must be tested or else the test will
+// fail.
+func (mt *MapTester) End() {
+	mt.ending = End
+}
+
+func (mt *MapTester) enforceEnding() {
+	// If we got an error in anything but a value check that means the test
+	// aborted. This could mean attempting to get an index past the end of the
+	// map, passing an incorrect type to AllValues, etc.
+	if !mt.d.lastResultIsValueError() {
+		return
+	}
+
+	if mt.ending == Etc {
+		return
+	}
+
+	if mt.ending == Unset {
+		mt.d.AddWarning("The function passed to Map() did not call Etc() or End()")
+		return
+	}
+
+	for _, k := range reflect.ValueOf(mt.d.Actual()).MapKeys() {
+		log.Printf("K = %v", k.Interface())
+		if !mt.seen[k.Interface()] {
+			mt.d.AddResult(result{
+				pass:        false,
+				where:       inUsage,
+				description: fmt.Sprintf("Your map test did not check the key %v", k),
+			})
+		}
 	}
 }

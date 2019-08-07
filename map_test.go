@@ -19,6 +19,7 @@ func TestMap(t *testing.T) {
 		d.Is(
 			map[int]int{1: 2},
 			d.Map(func(mt *MapTester) {
+				mt.End()
 				mt.Key(1, 2)
 			}),
 			"map[1] == 2",
@@ -34,6 +35,7 @@ func TestMap(t *testing.T) {
 		r.Is(
 			map[int]int{1: 2},
 			r.Map(func(mt *MapTester) {
+				mt.End()
 				mt.Key(1, 3)
 			}),
 			"map[1] == 3",
