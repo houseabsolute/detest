@@ -81,10 +81,11 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2, 2: 3, 3: 4},
-			r.Map(func(st *MapTester) {
-				st.Key(1, 2)
-				st.Key(2, 4)
-				st.Key(3, 4)
+			r.Map(func(mt *MapTester) {
+				mt.End()
+				mt.Key(1, 2)
+				mt.Key(2, 4)
+				mt.Key(3, 4)
 			}),
 			"map mix",
 		)
@@ -141,8 +142,8 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			42,
-			r.Map(func(st *MapTester) {
-				st.Key(0, 1)
+			r.Map(func(mt *MapTester) {
+				mt.Key(0, 1)
 			}),
 			"non-map",
 		)
@@ -175,8 +176,9 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2},
-			r.Map(func(st *MapTester) {
-				st.Key(42, 1)
+			r.Map(func(mt *MapTester) {
+				mt.Etc()
+				mt.Key(42, 1)
 			}),
 			"does not exist in map",
 		)
@@ -215,8 +217,9 @@ func TestMap(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.Is(
 			map[int]int{1: 2, 2: 3, 3: 4},
-			d.Map(func(st *MapTester) {
-				st.AllValues(func(v int) bool {
+			d.Map(func(mt *MapTester) {
+				mt.End()
+				mt.AllValues(func(v int) bool {
 					return v < 5
 				})
 			}),
@@ -232,8 +235,9 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2, 2: 6, 3: 4},
-			r.Map(func(st *MapTester) {
-				st.AllValues(func(v int) bool {
+			r.Map(func(mt *MapTester) {
+				mt.End()
+				mt.AllValues(func(v int) bool {
 					return v < 5
 				})
 			}),
@@ -274,8 +278,9 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2, 2: 6, 3: 4},
-			r.Map(func(st *MapTester) {
-				st.AllValues(func(v int) (bool, string) {
+			r.Map(func(mt *MapTester) {
+				mt.End()
+				mt.AllValues(func(v int) (bool, string) {
 					return v < 5, fmt.Sprintf("expected a value less than 5 but got %d", v)
 				})
 			}),
@@ -320,8 +325,8 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2},
-			r.Map(func(st *MapTester) {
-				st.AllValues(42)
+			r.Map(func(mt *MapTester) {
+				mt.AllValues(42)
 			}),
 			"AllValues not given a func",
 		)
@@ -361,8 +366,8 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2},
-			r.Map(func(st *MapTester) {
-				st.AllValues(func(x, y int) bool { return true })
+			r.Map(func(mt *MapTester) {
+				mt.AllValues(func(x, y int) bool { return true })
 			}),
 			"AllValues func takes 2 values",
 		)
@@ -402,8 +407,8 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2},
-			r.Map(func(st *MapTester) {
-				st.AllValues(func(x int) (bool, error) { return true, nil })
+			r.Map(func(mt *MapTester) {
+				mt.AllValues(func(x int) (bool, error) { return true, nil })
 			}),
 			"AllValues func returns 2 values",
 		)
@@ -444,8 +449,8 @@ func TestMap(t *testing.T) {
 		r := NewRecorder(d)
 		r.Is(
 			map[int]int{1: 2},
-			r.Map(func(st *MapTester) {
-				st.AllValues(func(x int) int { return 42 })
+			r.Map(func(mt *MapTester) {
+				mt.AllValues(func(x int) int { return 42 })
 			}),
 			"AllValues func returns int",
 		)
@@ -477,6 +482,89 @@ func TestMap(t *testing.T) {
 			},
 			r.record[0].output[0].result,
 			"got expected results",
+		)
+	})
+
+	t.Run("No call to Etc or End", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			map[string]int{"foo": 1},
+			r.Map(func(mt *MapTester) {
+				mt.Key("foo", 1)
+			}),
+			"no call to Etc or End",
+		)
+		mockT.AssertNotCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 2, "record has state with two output items")
+		assert.Equal(
+			t,
+			"The function passed to Map() did not call Etc() or End()",
+			r.record[0].output[1].warning,
+			"got the expected result",
+		)
+	})
+
+	t.Run("Calls End but does not check all values", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			map[string]int{"foo": 1, "bar": 2, "baz": 3},
+			r.Map(func(mt *MapTester) {
+				mt.End()
+				mt.Key("foo", 1)
+			}),
+			"called End but did not check all values",
+		)
+		mockT.AssertCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 3, "record has state with two output items")
+		assert.False(
+			t,
+			r.record[0].output[1].result.pass,
+			"got a failure for the second result",
+		)
+		assert.Equal(
+			t,
+			"Your map test did not check the key bar",
+			r.record[0].output[1].result.description,
+			"got a failure for the second result",
+		)
+		assert.False(
+			t,
+			r.record[0].output[2].result.pass,
+			"got a failure for the third result",
+		)
+		assert.Equal(
+			t,
+			"Your map test did not check the key baz",
+			r.record[0].output[2].result.description,
+			"got a failure for the third result",
+		)
+	})
+
+	t.Run("Calls Etc and does not check all values", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			map[string]int{"foo": 1, "bar": 2, "baz": 3},
+			r.Map(func(mt *MapTester) {
+				mt.Etc()
+				mt.Key("foo", 1)
+			}),
+			"called Etc and did not check all values",
+		)
+		mockT.AssertNotCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+		assert.True(
+			t,
+			r.record[0].output[0].result.pass,
+			"got a pass for the first result",
 		)
 	})
 }

@@ -2,8 +2,8 @@ package detest
 
 import (
 	"fmt"
-	"log"
 	"reflect"
+	"sort"
 )
 
 // MapComparer implements comparison of map values.
@@ -142,7 +142,7 @@ func (mt *MapTester) enforceEnding() {
 	// If we got an error in anything but a value check that means the test
 	// aborted. This could mean attempting to get an index past the end of the
 	// map, passing an incorrect type to AllValues, etc.
-	if !mt.d.lastResultIsValueError() {
+	if mt.d.lastResultIsNonValueError() {
 		return
 	}
 
@@ -155,14 +155,25 @@ func (mt *MapTester) enforceEnding() {
 		return
 	}
 
+	results := []result{}
 	for _, k := range reflect.ValueOf(mt.d.Actual()).MapKeys() {
-		log.Printf("K = %v", k.Interface())
 		if !mt.seen[k.Interface()] {
-			mt.d.AddResult(result{
+			results = append(results, result{
 				pass:        false,
 				where:       inUsage,
 				description: fmt.Sprintf("Your map test did not check the key %v", k),
 			})
 		}
+	}
+
+	// We sort the results for the benefit of our tests. This makes it easier
+	// to check for specific descriptions in the result without having to
+	// search through the list of results to find that message.
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].description < results[j].description
+	})
+
+	for _, r := range results {
+		mt.d.AddResult(r)
 	}
 }

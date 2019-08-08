@@ -485,4 +485,87 @@ func TestSlice(t *testing.T) {
 			"got expected results",
 		)
 	})
+
+	t.Run("No call to Etc or End", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			[]int{1},
+			r.Slice(func(st *SliceTester) {
+				st.Idx(0, 1)
+			}),
+			"no call to Etc or End",
+		)
+		mockT.AssertNotCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 2, "record has state with two output items")
+		assert.Equal(
+			t,
+			"The function passed to Slice() did not call Etc() or End()",
+			r.record[0].output[1].warning,
+			"got the expected result",
+		)
+	})
+
+	t.Run("Calls End but does not check all values", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			[]int{1, 2, 3},
+			r.Slice(func(st *SliceTester) {
+				st.End()
+				st.Idx(0, 1)
+			}),
+			"called End but did not check all values",
+		)
+		mockT.AssertCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 3, "record has state with two output items")
+		assert.False(
+			t,
+			r.record[0].output[1].result.pass,
+			"got a failure for the second result",
+		)
+		assert.Equal(
+			t,
+			"Your slice test did not check index 1",
+			r.record[0].output[1].result.description,
+			"got a failure for the second result",
+		)
+		assert.False(
+			t,
+			r.record[0].output[2].result.pass,
+			"got a failure for the third result",
+		)
+		assert.Equal(
+			t,
+			"Your slice test did not check index 2",
+			r.record[0].output[2].result.description,
+			"got a failure for the third result",
+		)
+	})
+
+	t.Run("Calls Etc and does not check all values", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		r := NewRecorder(d)
+		r.Is(
+			[]int{1, 2, 3},
+			r.Slice(func(st *SliceTester) {
+				st.Etc()
+				st.Idx(0, 1)
+			}),
+			"called Etc and did not check all values",
+		)
+		mockT.AssertNotCalled(t, "Fail")
+		assert.Len(t, r.record, 1, "one state was recorded")
+		assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+		assert.True(
+			t,
+			r.record[0].output[0].result.pass,
+			"got a pass for the first result",
+		)
+	})
 }

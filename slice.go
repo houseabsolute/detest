@@ -124,7 +124,7 @@ func (st *SliceTester) enforceEnding() {
 	// If we got an error in anything but a value check that means the test
 	// aborted. This could mean attempting to get an index past the end of the
 	// slice, passing an incorrect type to AllValues, etc.
-	if !st.d.lastResultIsValueError() {
+	if st.d.lastResultIsNonValueError() {
 		return
 	}
 
