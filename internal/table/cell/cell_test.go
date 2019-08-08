@@ -158,7 +158,7 @@ func TestRender(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			fmt.Sprintf("Cell needs width of 5 but was only allowed %d", w),
+			fmt.Sprintf("cell needs width of 5 but was only allowed %d", w),
 			"width of %d is too small for Render", w,
 		)
 	}
