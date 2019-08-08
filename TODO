@@ -4,3 +4,14 @@
 * structs
 * channels?
 * other things?
+
+## Make exact equality check to deep data traversal
+
+Right now it just uses reflect.DeepEqual but we should actually traverse the
+data structure ourselves so we can record the path to an error if the two
+structures don't match somewhere.
+
+# Fix table layout with long strings
+
+We need to check the term width and line wrap long strings. As it stands now
+it's easily possible to end up with a table that is wider than the terminal.
