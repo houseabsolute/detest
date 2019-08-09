@@ -48,7 +48,7 @@ type state struct {
 // method.
 type Comparer interface {
 	// Compare is called with one argument, the current `*detest.D`
-	// object. You can call `d.Actual()` to get the variable to be tested.
+	// object. You can call `d.Actual()` to get the value being tested.
 	Compare(*D)
 }
 
@@ -134,13 +134,13 @@ func (d *D) ResetState() {
 	d.state = &state{}
 }
 
-// PushActual adds an actual variable being tested to the current stack of
-// variables.
+// PushActual adds an actual value being tested to the current stack of
+// values.
 func (d *D) PushActual(actual interface{}) {
 	d.state.actual = append(d.state.actual, actual)
 }
 
-// PopActual removes the top element from the current stack of variables being
+// PopActual removes the top element from the current stack of values being
 // tested.
 func (d *D) PopActual() {
 	if len(d.state.actual) > 0 {
@@ -230,8 +230,7 @@ func (d *D) PopPath() {
 	}
 }
 
-// Actual returns the top actual variable from the stack of variables being
-// tested.
+// Actual returns the top actual value from the stack of values being tested.
 func (d *D) Actual() interface{} {
 	if len(d.state.actual) == 0 {
 		panic("Actual() called before any actual values are stored in the state")
