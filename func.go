@@ -6,9 +6,6 @@ import (
 )
 
 // FuncComparer implements comparison using a user-defined function.
-//
-// XXX - it also needs to be designed so the user can modify the description
-// of the failure in the result.
 type FuncComparer struct {
 	comparer reflect.Value
 	name     string
