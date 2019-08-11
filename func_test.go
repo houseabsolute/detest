@@ -223,7 +223,7 @@ func TestFunc(t *testing.T) {
 					},
 				},
 				where:       inUsage,
-				description: "Called a function as a comparison that takes an int but it was passed a []int",
+				description: "Called a function as a comparison that takes a []int but it was passed an int",
 			},
 			r.record[0].output[0].result,
 			"got the expected result",

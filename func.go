@@ -82,8 +82,8 @@ func (fc FuncComparer) Compare(d *D) {
 			where:  inUsage,
 			description: fmt.Sprintf(
 				"Called a function as a comparison that takes %s but it was passed %s",
-				articleize(describeType(v.Type())),
 				articleize(describeType(inType)),
+				articleize(describeType(v.Type())),
 			),
 		})
 		return
