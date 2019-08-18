@@ -33,4 +33,6 @@ func Test_typeOf(t *testing.T) {
 	assert.Equal(t, "structy", describeTypeOfValue(structy{}))
 
 	assert.Equal(t, "map[string]string", describeTypeOfValue(map[string]string{}))
+
+	assert.Equal(t, "nil", describeTypeOfValue(nil))
 }

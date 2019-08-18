@@ -33,7 +33,7 @@ func TestIs(t *testing.T) {
 		mockT.AssertCalled(t, "Fail")
 	})
 
-	t.Run("second argument is Comparer - pass", func(t *testing.T) {
+	t.Run("Second argument is Comparer - pass", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		d.Is(42, GTComparer(41), "42 > 41")
@@ -41,11 +41,19 @@ func TestIs(t *testing.T) {
 		mockT.AssertCalled(t, "WriteString", "Passed test: 42 > 41\n")
 	})
 
-	t.Run("second argument is Comparer - fail", func(t *testing.T) {
+	t.Run("Second argument is Comparer - fail", func(t *testing.T) {
 		mockT := new(mockT)
 		d := NewWithOutput(mockT, mockT)
 		d.Is(42, GTComparer(43), "42 > 43")
 		mockT.AssertCalled(t, "Fail")
+	})
+
+	t.Run("Can handle nil", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(nil, nil, "nil == nil")
+		mockT.AssertNotCalled(t, "Fail")
+		mockT.AssertCalled(t, "WriteString", "Passed test: nil == nil\n")
 	})
 }
 
@@ -56,6 +64,13 @@ func TestValueIs(t *testing.T) {
 	t.Run("Complex comparisons", testComplexComparisons)
 	t.Run("String comparisons", testStringComparisons)
 	t.Run("Struct comparisons", testStructComparisons)
+	t.Run("Can handle nil", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(nil, nil, "nil == nil")
+		mockT.AssertNotCalled(t, "Fail")
+		mockT.AssertCalled(t, "WriteString", "Passed test: nil == nil\n")
+	})
 }
 
 type intish int

@@ -222,6 +222,10 @@ func describeTypeOfValue(val interface{}) string {
 }
 
 func describeType(ty reflect.Type) string {
+	if ty == nil {
+		return "nil"
+	}
+
 	// This is only true for built-in types like string, float64, etc. If it's
 	// not composite or it's not a built-in then the name doesn't match the
 	// kind.
