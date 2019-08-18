@@ -1,13 +1,28 @@
 language: go
 
+env:
+  - GO111MODULE=on
+
 go:
   - "1.x"
   - master
 
+os:
+  - linux
+  - osx
+  - windows
+
+matrix:
+  exclude:
+    # Doesn't seem to work - see
+    # https://travis-ci.com/houseabsolute/omegasort/jobs/224739813
+    go: master
+    os: windows
+
 install:
-- ./dev/bin/install-dev-tools.sh
+- if [ "$TRAVIS_GO_VERSION" == "1.x" && "$TRAVIS_OS_NAME" == "linux" ]; then ./dev/bin/install-dev-tools.sh; fi
 
 script:
-- if [[ "$TRAVIS_GO_VERSION" == "1.x" ]]; then ./dev/bin/run-golangci-lint.sh; fi
-- dep check
 - go test -v ./...
+- if [ "$TRAVIS_GO_VERSION" == "1.x" && "$TRAVIS_OS_NAME" == "linux" ]; then ./dev/bin/run-golangci-lint.sh; fi
+- if [ "$TRAVIS_GO_VERSION" == "1.x" && "$TRAVIS_OS_NAME" == "linux" ]; then ./dev/bin/check-go-mod.sh; fi
