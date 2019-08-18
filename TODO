@@ -11,7 +11,13 @@ Right now it just uses reflect.DeepEqual but we should actually traverse the
 data structure ourselves so we can record the path to an error if the two
 structures don't match somewhere.
 
-# Fix table layout with long strings
+## Fix table layout with long strings
 
 We need to check the term width and line wrap long strings. As it stands now
 it's easily possible to end up with a table that is wider than the terminal.
+
+## Passing test output should be better
+
+Right now every call to something like `Idx` results in output like `Passed
+test: foo` over and over. But it'd be nicer to do something like `Passed test:
+foo - Idx(0)`.
