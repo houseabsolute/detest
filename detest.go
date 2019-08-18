@@ -113,8 +113,11 @@ func packageFromFrame(frame runtime.Frame) string {
 // `*detest.D`. A `*D` created this way will send its output to `os.Stdout`.
 func New(t TestingT) *D {
 	return &D{
-		t:                 t,
-		callerPackageRoot: filepath.Dir(findFrame(1).File),
+		t: t,
+		// On Windows the root will be something with backslashes (C:\foo\bar)
+		// but Go package paths have forward slashes (C:/foo/bar) so we
+		// convert the root to the forward slash version.
+		callerPackageRoot: filepath.ToSlash(filepath.Dir(findFrame(1).File)),
 		output:            os.Stdout,
 	}
 }
