@@ -12,7 +12,7 @@ function set_bindir () {
 }
 
 function install_go_tools () {
-    run "./dev/bin/download-golangci-lint.sh -b $BINDIR v1.12.3"
+    run "./dev/bin/download-golangci-lint.sh -b $BINDIR v1.17.1"
 }
 
 if [ "$1" == "-v" ]; then
