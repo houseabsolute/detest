@@ -8,10 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// This looks like a dupe of the code in slice_test because it's so similar in
-// many spots.
-//
-// nolint: dupl
 func TestMap(t *testing.T) {
 	tests := []struct {
 		name string
@@ -31,6 +27,7 @@ func TestMap(t *testing.T) {
 		{"AllValues func does not return a bool", mapFuncToAllValuesDoesNotReturnBool},
 		{"No call to Etc or End", mapNoCallToEtcOrEnd},
 		{"Calls End but does not check all values", mapCallsEndButDoesNotCheckAllValues},
+		{"Calls End but does not check all all values with nested maps", mapNestedEndChecks},
 		{"Calls Etc and does not check all values", mapCallsEtcAndDoesNotCheckAllValues},
 	}
 
@@ -569,6 +566,42 @@ func mapCallsEndButDoesNotCheckAllValues(t *testing.T) {
 		"Your map test did not check the key baz",
 		r.record[0].output[2].result.description,
 		"got a failure for the third result",
+	)
+}
+
+func mapNestedEndChecks(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	r := NewRecorder(d)
+	r.Is(
+		map[string]map[string]int{
+			"foo": {
+				"bar": 1,
+				"baz": 2,
+			},
+			"quux": {
+				"x": 1,
+				"y": 2,
+			},
+		},
+		r.Map(func(mt *MapTester) {
+			mt.End()
+			mt.Key("foo", d.Map(func(mt2 *MapTester) {
+				mt2.End()
+				mt2.Key("bar", 1)
+				mt2.Key("baz", 2)
+			}))
+		}),
+		"called End but did not check all values of outer map",
+	)
+	mockT.AssertCalled(t, "Fail")
+	assert.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 3, "record has state with four output items")
+	assert.Equal(
+		t,
+		"Your map test did not check the key quux",
+		r.record[0].output[2].result.description,
+		"got a failure for the second result",
 	)
 }
 

@@ -7,10 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// This looks like a dupe of the code in map_test because it's so similar in
-// many spots.
-//
-// nolint: dupl
 func TestSlice(t *testing.T) {
 	tests := []struct {
 		name string
@@ -30,6 +26,7 @@ func TestSlice(t *testing.T) {
 		{"AllValues func does not return a bool", sliceFuncToAllValuesDoesNotReturnBool},
 		{"No call to Etc or End", sliceNoCallToEtcOrEnd},
 		{"Calls End but does not check all values", sliceCallsEndButDoesNotCheckAllValues},
+		{"Calls End but does not check all all values with nested slices", sliceNestedEndChecks},
 		{"Calls Etc and does not check all values", sliceCallsEtcAndDoesNotCheckAllValues},
 	}
 
@@ -548,7 +545,7 @@ func sliceCallsEndButDoesNotCheckAllValues(t *testing.T) {
 	)
 	mockT.AssertCalled(t, "Fail")
 	assert.Len(t, r.record, 1, "one state was recorded")
-	assert.Len(t, r.record[0].output, 3, "record has state with two output items")
+	assert.Len(t, r.record[0].output, 3, "record has state with three output items")
 	assert.False(
 		t,
 		r.record[0].output[1].result.pass,
@@ -570,6 +567,34 @@ func sliceCallsEndButDoesNotCheckAllValues(t *testing.T) {
 		"Your slice test did not check index 2",
 		r.record[0].output[2].result.description,
 		"got a failure for the third result",
+	)
+}
+
+func sliceNestedEndChecks(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	r := NewRecorder(d)
+	r.Is(
+		[][]int{{1, 2, 3}, {4, 5, 6}},
+		r.Slice(func(st *SliceTester) {
+			st.End()
+			st.Idx(0, d.Slice(func(st2 *SliceTester) {
+				st2.End()
+				st2.Idx(0, 1)
+				st2.Idx(1, 2)
+				st2.Idx(2, 3)
+			}))
+		}),
+		"called End but did not check all values of outer slice",
+	)
+	mockT.AssertCalled(t, "Fail")
+	assert.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 4, "record has state with four output items")
+	assert.Equal(
+		t,
+		"Your slice test did not check index 1",
+		r.record[0].output[3].result.description,
+		"got a failure for the second result",
 	)
 }
 

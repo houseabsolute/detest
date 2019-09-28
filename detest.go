@@ -261,12 +261,21 @@ func (d *D) lastResultIsNonValueError() bool {
 		return false
 	}
 
-	lastResult := d.state.output[len(d.state.output)-1].result
-	if lastResult.pass {
-		return false
+	for i := len(d.state.output) - 1; i >= 0; i-- {
+		r := d.state.output[i].result
+		// If the last result is nil than the last result is a warning
+		if r == nil {
+			continue
+		}
+		if r.pass {
+			return false
+		}
+		return r.where != inValue
 	}
 
-	return lastResult.where != inValue
+	// We should only get here if the output stack _only_ has warnings, which
+	// is odd but I guess could happen.
+	return false
 }
 
 func (d *D) ok(name string) bool {
