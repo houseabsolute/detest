@@ -46,102 +46,103 @@ func TestDisplayWidth(t *testing.T) {
 	}
 }
 
-func Test_pad(t *testing.T) {
-	type testCase struct {
-		content   string
-		width     int
-		alignment Alignment
-		expect    string
-		name      string
-	}
-	tests := []testCase{
-		{
-			content:   "foo",
-			width:     5,
-			alignment: AlignLeft,
-			expect:    " foo ",
-			name:      "simple left alignment",
-		},
-		{
-			content:   "foo",
-			width:     8,
-			alignment: AlignLeft,
-			expect:    " foo    ",
-			name:      "left alignment with 1 extra space to fill - pads right first",
-		},
-		{
-			content:   "foo",
-			width:     9,
-			alignment: AlignLeft,
-			expect:    " foo     ",
-			name:      "left alignment with many extra spaces to fill",
-		},
-		{
-			content:   "foo",
-			width:     5,
-			alignment: AlignRight,
-			expect:    " foo ",
-			name:      "simple right alignment",
-		},
-		{
-			content:   "foo",
-			width:     8,
-			alignment: AlignRight,
-			expect:    "    foo ",
-			name:      "right alignment with 1 extra space to fill - pads left first",
-		},
-		{
-			content:   "foo",
-			width:     9,
-			alignment: AlignRight,
-			expect:    "     foo ",
-			name:      "right alignment with many extra spaces to fill",
-		},
-		{
-			content:   "foo",
-			width:     5,
-			alignment: AlignCenter,
-			expect:    " foo ",
-			name:      "simple center alignment",
-		},
-		{
-			content:   "foo",
-			width:     8,
-			alignment: AlignCenter,
-			expect:    "  foo   ",
-			name:      "center alignment with 1 extra space to fill - pads left first",
-		},
-		{
-			content:   "foo",
-			width:     9,
-			alignment: AlignCenter,
-			expect:    "   foo   ",
-			name:      "center alignment with many extra spaces to fill",
-		},
-		{
-			content:   ansi.DefaultScheme.Strong("foo"),
-			width:     9,
-			alignment: AlignLeft,
-			expect:    " " + ansi.DefaultScheme.Strong("foo") + "     ",
-			name:      "left alignment with many extra spaces to fill and ansi content",
-		},
-		{
-			content:   ansi.DefaultScheme.Strong("foo"),
-			width:     9,
-			alignment: AlignRight,
-			expect:    "     " + ansi.DefaultScheme.Strong("foo") + " ",
-			name:      "left alignment with many extra spaces to fill and ansi content",
-		},
-		{
-			content:   ansi.DefaultScheme.Strong("foo"),
-			width:     9,
-			alignment: AlignCenter,
-			expect:    "   " + ansi.DefaultScheme.Strong("foo") + "   ",
-			name:      "center alignment with many extra spaces to fill and ansi content",
-		},
-	}
+type padTestCase struct {
+	content   string
+	width     int
+	alignment Alignment
+	expect    string
+	name      string
+}
 
-	for _, test := range tests {
+var padTests = []padTestCase{
+	{
+		content:   "foo",
+		width:     5,
+		alignment: AlignLeft,
+		expect:    " foo ",
+		name:      "simple left alignment",
+	},
+	{
+		content:   "foo",
+		width:     8,
+		alignment: AlignLeft,
+		expect:    " foo    ",
+		name:      "left alignment with 1 extra space to fill - pads right first",
+	},
+	{
+		content:   "foo",
+		width:     9,
+		alignment: AlignLeft,
+		expect:    " foo     ",
+		name:      "left alignment with many extra spaces to fill",
+	},
+	{
+		content:   "foo",
+		width:     5,
+		alignment: AlignRight,
+		expect:    " foo ",
+		name:      "simple right alignment",
+	},
+	{
+		content:   "foo",
+		width:     8,
+		alignment: AlignRight,
+		expect:    "    foo ",
+		name:      "right alignment with 1 extra space to fill - pads left first",
+	},
+	{
+		content:   "foo",
+		width:     9,
+		alignment: AlignRight,
+		expect:    "     foo ",
+		name:      "right alignment with many extra spaces to fill",
+	},
+	{
+		content:   "foo",
+		width:     5,
+		alignment: AlignCenter,
+		expect:    " foo ",
+		name:      "simple center alignment",
+	},
+	{
+		content:   "foo",
+		width:     8,
+		alignment: AlignCenter,
+		expect:    "  foo   ",
+		name:      "center alignment with 1 extra space to fill - pads left first",
+	},
+	{
+		content:   "foo",
+		width:     9,
+		alignment: AlignCenter,
+		expect:    "   foo   ",
+		name:      "center alignment with many extra spaces to fill",
+	},
+	{
+		content:   ansi.DefaultScheme.Strong("foo"),
+		width:     9,
+		alignment: AlignLeft,
+		expect:    " " + ansi.DefaultScheme.Strong("foo") + "     ",
+		name:      "left alignment with many extra spaces to fill and ansi content",
+	},
+	{
+		content:   ansi.DefaultScheme.Strong("foo"),
+		width:     9,
+		alignment: AlignRight,
+		expect:    "     " + ansi.DefaultScheme.Strong("foo") + " ",
+		name:      "left alignment with many extra spaces to fill and ansi content",
+	},
+	{
+		content:   ansi.DefaultScheme.Strong("foo"),
+		width:     9,
+		alignment: AlignCenter,
+		expect:    "   " + ansi.DefaultScheme.Strong("foo") + "   ",
+		name:      "center alignment with many extra spaces to fill and ansi content",
+	},
+}
+
+func Test_pad(t *testing.T) {
+	for _, test := range padTests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			output := NewWithParams(test.content, 1, test.alignment).pad(style.Default, test.width)
