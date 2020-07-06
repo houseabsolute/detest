@@ -4,6 +4,7 @@ import "regexp"
 
 type Scheme struct {
 	Strong    func(string) string
+	Em        func(string) string
 	Correct   func(string) string
 	Incorrect func(string) string
 	Warning   func(string) string
@@ -11,6 +12,7 @@ type Scheme struct {
 
 var DefaultScheme = Scheme{
 	Strong:    bold,
+	Em:        em,
 	Correct:   green,
 	Incorrect: red,
 	Warning:   orange,
@@ -20,6 +22,10 @@ const endEscape = "\033[0m"
 
 func bold(s string) string {
 	return "\033[1m" + s + endEscape
+}
+
+func em(s string) string {
+	return "\033[7m" + s + endEscape
 }
 
 func green(s string) string {

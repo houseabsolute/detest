@@ -3,6 +3,7 @@
 package detest
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,8 +12,7 @@ import (
 	"strings"
 
 	"github.com/houseabsolute/detest/internal/ansi"
-	"github.com/houseabsolute/detest/internal/table"
-	"github.com/houseabsolute/detest/internal/table/style"
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 type failure int
@@ -279,38 +279,63 @@ func (d *D) lastResultIsNonValueError() bool {
 }
 
 func (d *D) ok(name string) bool {
-	pass := true
-	scheme := ansi.DefaultScheme
-
-	for _, o := range d.state.output {
-		var err error
-		// nolint: gocritic
-		if o.result != nil {
-			if o.result.pass {
-				_, err = d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
-			} else {
-				pass = false
-				d.t.Fail()
-				_, err = d.output.WriteString(o.result.describe(name, scheme))
-			}
-		} else if o.warning != "" {
-			t := table.NewWithTitle(scheme.Strong("Warning"))
-			t.AddRow(scheme.Warning(o.warning))
-			var r string
-			r, err = t.Render(style.Default)
-			if err == nil {
-				_, err = d.output.WriteString(r)
-			}
-		} else {
-			panic("We have an output which does not have a result or a warning. That should never happen.")
-		}
-
-		if err != nil {
-			panic(err)
-		}
+	pass, err := d.renderOutput(name)
+	if err != nil {
+		panic(err)
 	}
 
 	return pass
+}
+
+func (d *D) renderOutput(name string) (bool, error) {
+	pass := true
+	scheme := ansi.DefaultScheme
+
+	var warnings []string
+	for _, o := range d.state.output {
+		// nolint: gocritic
+		if o.result != nil {
+			if o.result.pass {
+				_, err := d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
+				if err != nil {
+					return false, err
+				}
+			} else {
+				pass = false
+				d.t.Fail()
+				_, err := d.output.WriteString(o.result.describe(name, scheme))
+				if err != nil {
+					return pass, err
+				}
+			}
+		} else if o.warning != "" {
+			warnings = append(warnings, o.warning)
+		} else {
+			return pass, errors.New("We have an output which does not have a result or a warning. That should never happen.")
+		}
+	}
+
+	if len(warnings) != 0 {
+		var title string
+		if len(warnings) == 1 {
+			title = "Warning"
+		} else {
+			title = "Warnings"
+		}
+		tw := tableWithTitle(title, scheme)
+		for _, w := range warnings {
+			tw.AppendRow(table.Row{scheme.Warning(w)})
+		}
+		_, err := d.output.WriteString(tw.Render() + "\n")
+		if err != nil {
+			return pass, err
+		}
+	}
+
+	// Needed to separate a table + warnings from the next batch.
+	d.output.WriteString("\n")
+
+	return pass, nil
 }
 
 // CalledAt returns a string describing the function, file, and line for this

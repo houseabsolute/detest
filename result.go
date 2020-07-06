@@ -2,12 +2,14 @@ package detest
 
 import (
 	"fmt"
+	"os"
 	"reflect"
+	"strconv"
 
 	"github.com/houseabsolute/detest/internal/ansi"
-	"github.com/houseabsolute/detest/internal/table"
-	"github.com/houseabsolute/detest/internal/table/cell"
-	"github.com/houseabsolute/detest/internal/table/style"
+	"github.com/houseabsolute/detest/internal/term"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/mattn/go-runewidth"
 )
 
 // We wrap values in a struct so that we can use a nil *value to indicate that
@@ -45,133 +47,112 @@ func (r result) showExpect() bool {
 }
 
 type describer struct {
-	r result
-	t *table.Table
-	s ansi.Scheme
+	r  result
+	tw table.Writer
+	s  ansi.Scheme
 }
 
 func (r result) describe(name string, s ansi.Scheme) string {
-	t := table.NewWithTitle(s.Strong(fmt.Sprintf("Failed test: %s", name)))
-	return describer{r, t, s}.table()
+	tw := tableWithTitle(fmt.Sprintf("Failed test: %s", name), s)
+	return describer{r, tw, s}.table()
 }
 
 func (d describer) table() string {
 	d.addHeaders()
 
-	lastBodyRow := d.lastBodyRow()
+	footer, widths := d.footer()
+	rowLen := len(footer)
 
-	body := [][]interface{}{}
+	body := []table.Row{}
 	for _, p := range d.r.path {
-		body = append(
-			body,
-			[]interface{}{
-				p.data,
-				cell.NewWithParams("", len(lastBodyRow)-2, cell.AlignLeft),
-				p.CalledAt(),
-			},
-		)
+		row := table.Row{p.data}
+		w := displayWidth(p.data)
+		if w > widths["PATH"] {
+			widths["PATH"] = w
+		}
+		for i := 0; i < rowLen-2; i++ {
+			row = append(row, "")
+		}
+
+		called := p.CalledAt()
+		row = append(row, called)
+		w = displayWidth(called)
+		if w > widths["CALLER"] {
+			widths["CALLER"] = w
+		}
+
+		body = append(body, row)
 	}
-	body = append(body, lastBodyRow)
 	for _, b := range body {
-		d.t.AddRow(b...)
+		d.tw.AppendRow(b, table.RowConfig{AutoMerge: true})
 	}
 
+	d.tw.AppendFooter(footer)
+
+	cc := columnConfigs(widths)
+	if cc != nil {
+		d.tw.SetColumnConfigs(cc)
+	}
+
+	var post string
 	if d.r.description != "" {
-		span := 0
-		if d.r.hasPath() {
-			span += 2
-		}
-		if d.r.showActual() {
-			span += 2
-		}
-		if d.r.op != "" {
-			span++
-		}
-		if d.r.showExpect() {
-			span += 2
-		}
-		d.t.AddFooterRow(
-			cell.NewWithParams(d.s.Strong(d.s.Incorrect(d.r.description)), span, cell.AlignLeft),
-		)
+		post = d.s.Strong(d.s.Incorrect(d.r.description)) + "\n"
 	}
 
-	rendered, err := d.t.Render(style.Default)
-	if err != nil {
-		panic(err)
-	}
-	return rendered
+	return d.tw.Render() + "\n" + post
 }
 
 func (d describer) addHeaders() {
-	first := []interface{}{}
+	header := table.Row{}
 	if d.r.hasPath() {
-		first = append(first, "")
-	}
-	if d.r.showActual() {
-		first = append(
-			first,
-			cell.NewWithParams("ACTUAL", 2, cell.AlignCenter),
-		)
-		if d.r.op != "" {
-			first = append(first, cell.NewWithParams("", 1, cell.AlignCenter))
-		}
-	}
-
-	if d.r.showExpect() {
-		first = append(first, cell.NewWithParams("EXPECT", 2, cell.AlignCenter))
-	}
-	if d.r.hasPath() {
-		first = append(first, "")
-	}
-
-	d.t.AddHeaderRow(first...)
-
-	second := []interface{}{}
-	if d.r.hasPath() {
-		second = append(second, cell.NewWithParams("PATH", 1, cell.AlignCenter))
+		header = append(header, "PATH")
 	}
 
 	if d.r.showActual() {
-		second = append(
-			second,
-			cell.NewWithParams("TYPE", 1, cell.AlignCenter),
-			cell.NewWithParams("VALUE", 1, cell.AlignCenter),
-		)
+		header = append(header, "GOT")
 	}
 	if d.r.op != "" {
-		second = append(second, cell.NewWithParams("OP", 1, cell.AlignCenter))
+		header = append(header, "OP")
 	}
 
 	if d.r.showExpect() {
-		second = append(
-			second,
-			cell.NewWithParams("TYPE", 1, cell.AlignCenter),
-			cell.NewWithParams("VALUE", 1, cell.AlignCenter),
-		)
+		header = append(header, "EXPECT")
 	}
 	if d.r.hasPath() {
-		second = append(second, cell.NewWithParams("CALLER", 1, cell.AlignCenter))
+		header = append(header, "CALLER")
 	}
 
-	d.t.AddHeaderRow(second...)
+	d.tw.AppendHeader(header, table.RowConfig{AutoMerge: true})
 }
 
-func (d describer) lastBodyRow() []interface{} {
+func (d describer) footer() ([]interface{}, map[string]int) {
+	widths := map[string]int{"PATH": 0, "CALLER": 0}
+
 	var actual, expect, op string
 	if d.r.showActual() {
 		actual = fmt.Sprintf("%v", d.r.actual.value)
+		widths["GOT"] = displayWidth(actual)
 	}
 	if d.r.showExpect() {
 		expect = fmt.Sprintf("%v", d.r.expect.value)
+		widths["ACTUAL"] = displayWidth(actual)
 	}
 	op = d.r.op
 
 	var aType, eType string
 	if d.r.showActual() {
 		aType = d.r.actual.description()
+		w := displayWidth(aType)
+		if w > widths["GOT"] {
+			widths["GOT"] = w
+		}
 	}
 	if d.r.showExpect() {
 		eType = d.r.expect.description()
+		w := displayWidth(eType)
+		if w > widths["ACTUAL"] {
+			widths["ACTUAL"] = w
+		}
 	}
 
 	switch d.r.where {
@@ -185,24 +166,27 @@ func (d describer) lastBodyRow() []interface{} {
 		op = d.s.Incorrect(op)
 	}
 
-	lastBodyRow := []interface{}{}
+	footer := table.Row{}
 	if d.r.hasPath() {
-		lastBodyRow = append(lastBodyRow, "")
+		footer = append(footer, "")
 	}
 	if d.r.showActual() {
-		lastBodyRow = append(lastBodyRow, aType, actual)
+		footer = append(footer, d.s.Em(aType)+"\n"+actual)
 	}
 	if op != "" {
-		lastBodyRow = append(lastBodyRow, op)
+		// The extra space is required to make go-pretty render the right
+		// border for the first line of this cell.
+		footer = append(footer, " \n"+op)
+		widths["OP"] = displayWidth(op)
 	}
 	if d.r.showExpect() {
-		lastBodyRow = append(lastBodyRow, eType, expect)
+		footer = append(footer, d.s.Em(eType)+"\n"+expect)
 	}
 	if d.r.hasPath() {
-		lastBodyRow = append(lastBodyRow, "")
+		footer = append(footer, "")
 	}
 
-	return lastBodyRow
+	return footer, widths
 }
 
 func (v *value) description() string {
@@ -296,4 +280,73 @@ func describeStruct(ty reflect.Type) string {
 	}
 
 	return "<anon struct>"
+}
+
+func displayWidth(content string) int {
+	return runewidth.StringWidth(ansi.Strip(content))
+}
+
+func columnConfigs(widths map[string]int) []table.ColumnConfig {
+	var total int
+	for _, w := range widths {
+		total += w
+		// 2 for padding, 1 for separator
+		total += 3
+	}
+	total += 1
+
+	w := termWidth()
+	if total <= w {
+		return nil
+	}
+
+	for total > w {
+		diff := total - w
+		if diff < 10 {
+			widths["CALLER"] -= diff
+			break
+		}
+
+		widths["CALLER"] -= 10
+		total -= 10
+		if total < w {
+			break
+		}
+
+		widths["PATH"] -= 5
+		total -= 5
+		if total < w {
+			break
+		}
+	}
+
+	var configs []table.ColumnConfig
+	for k, v := range widths {
+		configs = append(
+			configs,
+			table.ColumnConfig{
+				Name:     k,
+				WidthMax: v,
+			},
+		)
+	}
+
+	return configs
+}
+
+const defaultWidth = 100
+
+func termWidth() int {
+	w := term.Width()
+	if w != 0 {
+		return w
+	}
+	col := os.Getenv("COLUMNS")
+	if col != "" {
+		w, err := strconv.Atoi(col)
+		if err != nil && w > 0 {
+			return w
+		}
+	}
+	return defaultWidth
 }
