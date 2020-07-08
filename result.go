@@ -62,14 +62,19 @@ func (d describer) table() string {
 
 	body := [][]interface{}{}
 	for _, p := range d.r.path {
-		body = append(
-			body,
-			[]interface{}{
-				p.data,
-				cell.NewWithParams("", len(lastBodyRow)-2, cell.AlignLeft),
-				p.CalledAt(),
-			},
-		)
+		row := []interface{}{p.data}
+		if d.r.showActual() {
+			row = append(row, cell.NewWithParams("", 2, cell.AlignLeft))
+		}
+		if d.r.op != "" {
+			row = append(row, "")
+		}
+		if d.r.showExpect() {
+			row = append(row, cell.NewWithParams("", 2, cell.AlignLeft))
+		}
+		row = append(row, p.CalledAt())
+
+		body = append(body, row)
 	}
 	body = append(body, lastBodyRow)
 	for _, b := range body {
