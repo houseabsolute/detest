@@ -311,7 +311,7 @@ func (d *D) renderOutput(name string) (bool, error) {
 		} else if o.warning != "" {
 			warnings = append(warnings, o.warning)
 		} else {
-			return pass, errors.New("We have an output which does not have a result or a warning. That should never happen.")
+			return pass, errors.New("we have an output which does not have a result or a warning but that should never happen")
 		}
 	}
 
@@ -333,7 +333,10 @@ func (d *D) renderOutput(name string) (bool, error) {
 	}
 
 	// Needed to separate a table + warnings from the next batch.
-	d.output.WriteString("\n")
+	_, err := d.output.WriteString("\n")
+	if err != nil {
+		return pass, err
+	}
 
 	return pass, nil
 }

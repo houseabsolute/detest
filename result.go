@@ -293,7 +293,8 @@ func columnConfigs(widths map[string]int) []table.ColumnConfig {
 		// 2 for padding, 1 for separator
 		total += 3
 	}
-	total += 1
+	// Left most border
+	total++
 
 	w := termWidth()
 	if total <= w {
