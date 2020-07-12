@@ -4,13 +4,13 @@ status=0
 
 golangci-lint run \
     -c ./.golangci-lint-main.yml \
-    --skip-dirs internal/.+
+    --skip-dirs pkg/detest/internal/.+
 
 status+=$?
 
 golangci-lint run \
     -c ./.golangci-lint-internal.yml \
-    ./internal/...
+    ./pkg/detest/internal/...
 
 status+=$?
 

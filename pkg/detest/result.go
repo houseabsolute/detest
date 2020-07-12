@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/houseabsolute/detest/internal/ansi"
-	"github.com/houseabsolute/detest/internal/term"
+	"github.com/houseabsolute/detest/pkg/detest/internal/ansi"
+	"github.com/houseabsolute/detest/pkg/detest/internal/term"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/mattn/go-runewidth"
 )

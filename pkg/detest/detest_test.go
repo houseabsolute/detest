@@ -3,7 +3,7 @@ package detest
 import (
 	"testing"
 
-	"github.com/houseabsolute/detest/internal/testhelper"
+	"github.com/houseabsolute/detest/pkg/detest/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

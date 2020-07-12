@@ -7,7 +7,7 @@ package demo
 import (
 	"testing"
 
-	"github.com/houseabsolute/detest"
+	"github.com/houseabsolute/detest/pkg/detest"
 )
 
 func Test1(t *testing.T) {
