@@ -16,7 +16,7 @@ func TestIs(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.Is(1, 1, "1 == 1")
 		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Passed test: 1 == 1\n")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
 	})
 
 	t.Run("Failing test", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestIs(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.Is(42, GTComparer(41), "42 > 41")
 		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Passed test: 42 > 41\n")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
 	})
 
 	t.Run("Second argument is Comparer - fail", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestIs(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.Is(nil, nil, "nil == nil")
 		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Passed test: nil == nil\n")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
 	})
 }
 
@@ -69,7 +69,7 @@ func TestValueIs(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.ValueIs(nil, nil, "nil == nil")
 		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Passed test: nil == nil\n")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
 	})
 }
 
@@ -107,7 +107,7 @@ func testNumericComparisons(t *testing.T) {
 				d := NewWithOutput(mockT, mockT)
 				d.ValueIs(actual, expect, "1 == 1")
 				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Passed test: 1 == 1\n")
+				mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
 			})
 		}
 	}
@@ -130,7 +130,7 @@ func testComplexComparisons(t *testing.T) {
 				d := NewWithOutput(mockT, mockT)
 				d.ValueIs(actual, expect, "1,1 == 1,1")
 				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Passed test: 1,1 == 1,1\n")
+				mockT.AssertCalled(t, "WriteString", "Assertion ok: 1,1 == 1,1\n")
 			})
 		}
 	}
@@ -243,7 +243,7 @@ func testStringComparisons(t *testing.T) {
 				d := NewWithOutput(mockT, mockT)
 				d.ValueIs(actual, expect, "\"foo\" == \"foo\"")
 				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Passed test: \"foo\" == \"foo\"\n")
+				mockT.AssertCalled(t, "WriteString", "Assertion ok: \"foo\" == \"foo\"\n")
 			})
 		}
 	}
@@ -273,7 +273,7 @@ func testStructComparisons(t *testing.T) {
 				d := NewWithOutput(mockT, mockT)
 				d.ValueIs(actual, expect, "{val: 1} == {val: 1}")
 				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Passed test: {val: 1} == {val: 1}\n")
+				mockT.AssertCalled(t, "WriteString", "Assertion ok: {val: 1} == {val: 1}\n")
 			})
 		}
 	}

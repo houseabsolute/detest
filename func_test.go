@@ -40,7 +40,7 @@ func funcWithNoNamePasses(t *testing.T) {
 		"len(s) < 4",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: len(s) < 4\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: len(s) < 4\n")
 }
 
 func funcWithNamePasses(t *testing.T) {
@@ -56,7 +56,7 @@ func funcWithNamePasses(t *testing.T) {
 		"len(s) < 4",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: len(s) < 4\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: len(s) < 4\n")
 }
 
 func funcWithNoNameFails(t *testing.T) {

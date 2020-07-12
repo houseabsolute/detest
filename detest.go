@@ -296,7 +296,7 @@ func (d *D) renderOutput(name string) (bool, error) {
 		// nolint: gocritic
 		if o.result != nil {
 			if o.result.pass {
-				_, err := d.output.WriteString(fmt.Sprintf("Passed test: %s\n", name))
+				_, err := d.output.WriteString(fmt.Sprintf("Assertion ok: %s\n", name))
 				if err != nil {
 					return false, err
 				}
@@ -332,10 +332,12 @@ func (d *D) renderOutput(name string) (bool, error) {
 		}
 	}
 
-	// Needed to separate a table + warnings from the next batch.
-	_, err := d.output.WriteString("\n")
-	if err != nil {
-		return pass, err
+	if len(warnings) > 0 || !pass {
+		// Needed to separate a table + warnings from the next batch.
+		_, err := d.output.WriteString("\n")
+		if err != nil {
+			return pass, err
+		}
 	}
 
 	return pass, nil

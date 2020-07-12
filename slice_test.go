@@ -47,7 +47,7 @@ func slicePassingTest(t *testing.T) {
 		"slice[0] == 1",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: slice[0] == 1\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: slice[0] == 1\n")
 }
 
 func sliceFailingTest(t *testing.T) {
@@ -248,7 +248,7 @@ func slicePassWithAllValues(t *testing.T) {
 		"AllValues < 5",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: AllValues < 5\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: AllValues < 5\n")
 }
 
 func sliceFailWithAllValues(t *testing.T) {

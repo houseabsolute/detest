@@ -48,7 +48,7 @@ func mapPassingTest(t *testing.T) {
 		"map[1] == 2",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: map[1] == 2\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: map[1] == 2\n")
 }
 
 func mapFailingTest(t *testing.T) {
@@ -249,7 +249,7 @@ func mapPassWithAllValues(t *testing.T) {
 		"AllValues < 5",
 	)
 	mockT.AssertNotCalled(t, "Fail")
-	mockT.AssertCalled(t, "WriteString", "Passed test: AllValues < 5\n")
+	mockT.AssertCalled(t, "WriteString", "Assertion ok: AllValues < 5\n")
 }
 
 func mapFailWithAllValues(t *testing.T) {

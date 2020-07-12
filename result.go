@@ -53,7 +53,7 @@ type describer struct {
 }
 
 func (r result) describe(name string, s ansi.Scheme) string {
-	tw := tableWithTitle(fmt.Sprintf("Failed test: %s", name), s)
+	tw := tableWithTitle(fmt.Sprintf("Assertion not ok: %s", name), s)
 	return describer{r, tw, s}.table()
 }
 
