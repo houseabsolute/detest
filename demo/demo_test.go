@@ -5,6 +5,7 @@
 package demo
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/houseabsolute/detest/pkg/detest"
@@ -154,5 +155,48 @@ func Test8(t *testing.T) {
 			}))
 		}),
 		"map of slice of map of slice",
+	)
+}
+
+type HasMethods struct {
+	size int
+	Name string
+}
+
+func (hm HasMethods) Size() int {
+	return hm.size
+}
+
+func (hm HasMethods) SizePlus(plus int) int {
+	return hm.size + plus
+}
+
+func (hm HasMethods) UCName() string {
+	return strings.ToUpper(hm.Name)
+}
+
+func Test9(t *testing.T) {
+	hm := &HasMethods{42, "Arthur"}
+	d := detest.New(t)
+	d.Is(
+		hm,
+		d.Struct(func(st *detest.StructTester) {
+			st.Field("size", 43)
+			st.Field("Name", "Douglas")
+		}),
+		"struct fields in struct pointer",
+	)
+}
+
+func Test10(t *testing.T) {
+	hm := HasMethods{42, "Arthur"}
+	d := detest.New(t)
+	d.Is(
+		hm,
+		d.Struct(func(st *detest.StructTester) {
+			st.Field("size", 43)
+			st.Field("Name", "Douglas")
+		}),
+		"struct fields in struct",
 	)
 }
