@@ -63,7 +63,7 @@ func (st *StructTester) Field(field string, expect interface{}) {
 
 	// This is hack to be able to get private fields from structs (as opposed
 	// to struct pointers, where this is a little simpler). We need to copy
-	// the original Value into an addressable Value..
+	// the original Value into an addressable Value.
 	v2 := v
 	if v.Kind() == reflect.Struct {
 		v2 = reflect.New(v.Type()).Elem()
