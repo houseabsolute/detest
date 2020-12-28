@@ -7,19 +7,15 @@ function run () {
     eval $1
 }
 
-function set_bindir () {
-    BINDIR="$GOPATH/bin"
-}
-
-function install_go_tools () {
-    run "./dev/bin/download-golangci-lint.sh -b $BINDIR v1.17.1"
+function install_tools () {
+    run "./dev/bin/download-golangci-lint.sh v1.33.0"
+    run "go get golang.org/x/tools/cmd/goimports"
 }
 
 if [ "$1" == "-v" ]; then
     set -x
 fi
 
-set_bindir
-install_go_tools
+install_tools
 
 exit 0

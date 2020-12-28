@@ -1,0 +1,15 @@
+[commands.run-golangci-lint]
+type = "lint"
+include = "**/*.go"
+run_mode = "root"
+cmd = ["./dev/bin/run-golangci-lint.sh"]
+env = { "FAIL_ON_WARNINGS" = "1" }
+ok_exit_codes = [0]
+lint_failure_exit_codes = [1, 2]
+
+[commands.goimports]
+type = "tidy"
+include = "**/*.go"
+cmd = ["goimports", "-w"]
+ok_exit_codes = [0]
+
