@@ -1,11 +1,10 @@
 module github.com/houseabsolute/detest
 
-go 1.12
+go 1.16
 
 require (
-	github.com/jedib0t/go-pretty/v6 v6.0.4
-	github.com/mattn/go-runewidth v0.0.9
-	github.com/stretchr/objx v0.1.1 // indirect
-	github.com/stretchr/testify v1.2.2
-	golang.org/x/sys v0.0.0-20180816055513-1c9583448a9c
+	github.com/jedib0t/go-pretty/v6 v6.1.0
+	github.com/mattn/go-runewidth v0.0.10
+	github.com/stretchr/testify v1.7.0
+	golang.org/x/sys v0.0.0-20210324051608-47abb6519492
 )
