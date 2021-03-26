@@ -44,7 +44,12 @@ func (d *D) Is(actual, expect interface{}, args ...interface{}) bool {
 //
 // The final arguments follow the same rules as `d.Is`.
 func (d *D) Passes(actual interface{}, expect Comparer, args ...interface{}) bool {
-	return d.Is(actual, expect, argsToName(args, "unnamed d.Passes call"))
+	d.ResetState()
+	d.PushActual(actual)
+	defer d.PopActual()
+
+	expect.Compare(d)
+	return d.ok(argsToName(args, "unnamed d.Passes call"))
 }
 
 // Require takes a boolean and calls t.Fatal if it's false. The typical use is

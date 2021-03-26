@@ -7,6 +7,7 @@
   sometimes consider the two argument not nil, if the second argument was a
   nil of a specific type (like you get if you write `var s *string` or `var s
   []int`).
+* Calling `d.Passes` recorded the call's path as `d.Is` instead of `d.Passes`.
 
 
 ## 0.0.2  2021-03-26

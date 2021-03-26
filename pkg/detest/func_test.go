@@ -36,7 +36,7 @@ func funcWithNoNamePasses(t *testing.T) {
 		return len(s) < 4
 	})
 	assert.NoError(t, err, "no error calling Func()")
-	d.Is(
+	d.Passes(
 		[]int{1, 2, 3},
 		f,
 		"len(s) < 4",
@@ -52,7 +52,7 @@ func funcWithNamePasses(t *testing.T) {
 		return len(s) < 4
 	}, "Has a name")
 	assert.NoError(t, err, "no error calling Func()")
-	d.Is(
+	d.Passes(
 		[]int{1, 2, 3},
 		f,
 		"len(s) < 4",
@@ -69,7 +69,7 @@ func funcWithNoNameFails(t *testing.T) {
 	})
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		[]int{1, 2, 3, 4},
 		f,
 		"Func checks that array is less than 4 elements",
@@ -88,7 +88,7 @@ func funcWithNoNameFails(t *testing.T) {
 				{
 					data:   "[]int",
 					callee: "Func()",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inValue,
@@ -107,7 +107,7 @@ func funcWithNameFails(t *testing.T) {
 	}, "Has a name")
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		[]int{1, 2, 3, 4},
 		f,
 		"Func checks that array is less than 4 elements",
@@ -126,7 +126,7 @@ func funcWithNameFails(t *testing.T) {
 				{
 					data:   "[]int",
 					callee: "Has a name",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inValue,
@@ -145,7 +145,7 @@ func funcWithNoNameFailsWithDescription(t *testing.T) {
 	})
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		[]int{1, 2, 3, 4},
 		f,
 		"Func checks that array is less than 4 elements",
@@ -164,7 +164,7 @@ func funcWithNoNameFailsWithDescription(t *testing.T) {
 				{
 					data:   "[]int",
 					callee: "Func()",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inValue,
@@ -183,7 +183,7 @@ func funcWithNameFailsWithDescription(t *testing.T) {
 	}, "Has a name")
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		[]int{1, 2, 3, 4},
 		f,
 		"Func checks that array is less than 4 elements",
@@ -202,7 +202,7 @@ func funcWithNameFailsWithDescription(t *testing.T) {
 				{
 					data:   "[]int",
 					callee: "Has a name",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inValue,
@@ -221,7 +221,7 @@ func funcCannotAcceptArgument(t *testing.T) {
 	}, "Has a name")
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		42,
 		f,
 		"Func checks that array is less than 4 elements",
@@ -240,7 +240,7 @@ func funcCannotAcceptArgument(t *testing.T) {
 				{
 					data:   "int",
 					callee: "Has a name",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inUsage,
@@ -320,7 +320,7 @@ func funcHandlesUnexpectedNil(t *testing.T) {
 	})
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
-	r.Is(
+	r.Passes(
 		nil,
 		f,
 		"len(s) < 4",
@@ -339,7 +339,7 @@ func funcHandlesUnexpectedNil(t *testing.T) {
 				{
 					data:   "nil",
 					callee: "Func()",
-					caller: "detest.(*DetestRecorder).Is",
+					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
 			where:       inUsage,

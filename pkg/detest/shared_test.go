@@ -28,6 +28,12 @@ func (d *DetestRecorder) Is(actual, expect interface{}, name string) bool {
 	return ok
 }
 
+func (d *DetestRecorder) Passes(actual, expect interface{}, name string) bool {
+	ok := d.D.Passes(actual, expect.(Comparer), name)
+	d.record = append(d.record, d.D.state)
+	return ok
+}
+
 type Call struct {
 	Method string
 	Args   []interface{}
