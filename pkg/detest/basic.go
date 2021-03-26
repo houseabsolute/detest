@@ -17,10 +17,15 @@ type ExactEqualityComparer struct {
 // Is tests that two variables are exactly equal. The first variable is the
 // actual variable and the second is what is expected. The `expect` argument
 // can be either a literal value or anything that implements the
-// detest.Comparer interface. The final argument is the assertion name.
+// detest.Comparer interface.
+//
+// The final arguments are the assertion name. If you provide a single
+// argument, this should be a string naming the assertion. If you provide more
+// than one argument, they will be formatted using fmt.Sprintf(args[0],
+// args[1]...). If you do not provide a name then one will be generated.
 //
 // Under the hood this is implemented with the ExactEqualityComparer.
-func (d *D) Is(actual, expect interface{}, name string) bool {
+func (d *D) Is(actual, expect interface{}, args ...interface{}) bool {
 	d.ResetState()
 	d.PushActual(actual)
 	defer d.PopActual()
@@ -30,15 +35,39 @@ func (d *D) Is(actual, expect interface{}, name string) bool {
 	} else {
 		d.Equal(expect).Compare(d)
 	}
-	return d.ok(name)
+	return d.ok(argsToName(args, "unnamed d.Is call"))
 }
 
 // Passes tests that the given value passes the comparison given. The first
 // variable is the actual variable and the second is what is expected. The
-// `expect` argument must implement the detest.Comparer interface. The final
-// argument is the assertion name.
-func (d *D) Passes(actual interface{}, expect Comparer, name string) bool {
-	return d.Is(actual, expect, name)
+// `expect` argument must implement the detest.Comparer interface.
+//
+// The final arguments follow the same rules as `d.Is`.
+func (d *D) Passes(actual interface{}, expect Comparer, args ...interface{}) bool {
+	return d.Is(actual, expect, argsToName(args, "unnamed d.Passes call"))
+}
+
+// Require takes a boolean and calls t.Fatal if it's false. The typical use is
+// to write something like:
+//
+//     d.Require(
+//         d.Is(...),
+//         "got expected test case data",
+//     )
+//
+// or ...
+//
+//     d.Require(
+//         d.Passes(...)),
+//         "got array with 3 or 4 elements",
+//     )
+//
+// The final arguments follow the same rules as `d.Is`.
+func (d *D) Require(ok bool, args ...interface{}) {
+	if ok {
+		return
+	}
+	d.t.Fatal(argsToName(args, "required test failed"))
 }
 
 // Equal takes an expected literal value and returns an ExactEqualityComparer
@@ -110,13 +139,13 @@ type ValueEqualityComparer struct {
 // type can be converted to the other (for example `int32` and `int64`).
 //
 // Under the hood this is implemented with the ValueEqualityComparer.
-func (d *D) ValueIs(actual, expect interface{}, name string) bool {
+func (d *D) ValueIs(actual, expect interface{}, args ...interface{}) bool {
 	d.ResetState()
 	d.PushActual(actual)
 	defer d.PopActual()
 
 	d.ValueEqual(expect).Compare(d)
-	return d.ok(name)
+	return d.ok(argsToName(args, "unnamed d.ValueIs call"))
 }
 
 // ValueEqual takes an expected literal value and returns a
@@ -333,4 +362,21 @@ func intUintConversion(int, uint reflect.Value, intInfo, uintInfo *numericInfo) 
 	}
 
 	return int, uint.Convert(int.Type()), ""
+}
+
+func argsToName(args []interface{}, def string) string {
+	if len(args) == 0 {
+		return def
+	}
+
+	format, ok := args[0].(string)
+	if !ok {
+		format = fmt.Sprintf("%v", args[0])
+	}
+
+	if len(args) > 1 {
+		return fmt.Sprintf(format, args[1:]...)
+	}
+
+	return format
 }

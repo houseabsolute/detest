@@ -56,6 +56,7 @@ type Comparer interface {
 // API that we care about.
 type TestingT interface {
 	Fail()
+	Fatal(args ...interface{})
 }
 
 // StringWriter is an interface used for writing strings.

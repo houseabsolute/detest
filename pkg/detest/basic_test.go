@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIs(t *testing.T) {
@@ -71,6 +72,30 @@ func TestPasses(t *testing.T) {
 		d := NewWithOutput(mockT, mockT)
 		d.Is(42, GTComparer(43), "42 > 43")
 		mockT.AssertCalled(t, "Fail")
+	})
+}
+
+func TestRequire(t *testing.T) {
+	t.Run("d.Require passes", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Require(d.Is(1, 1, "1 == 1"))
+		mockT.AssertNotCalled(t, "Fatal")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
+	})
+
+	t.Run("d.Require fails", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Require(d.Is(1, 2, "1 == 1"))
+		mockT.AssertCalled(t, "Fatal", []interface{}{"required test failed"})
+	})
+
+	t.Run("d.Require fails and has name", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Require(d.Is(1, 2, "1 == 1"), "must have numeric equality!")
+		mockT.AssertCalled(t, "Fatal", []interface{}{"must have numeric equality!"})
 	})
 }
 
@@ -294,4 +319,121 @@ func testStructComparisons(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestNameGeneration(t *testing.T) {
+	t.Run("d.Is with no name", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(1, 1)
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Is call\n")
+	})
+
+	t.Run("d.Is with one string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(1, 1, "one string")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+	})
+
+	t.Run("d.Is with multiple args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(1, 1, "got %d %s", 5, "dogs")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+	})
+
+	t.Run("d.Is with one non-string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(1, 1, []int{1, 2, 3})
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+	})
+
+	t.Run("d.Is with multiple non-string args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(1, 1, []int{1, 2, 3}, "foo")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+	})
+
+	t.Run("d.Passes with no name", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(v int) bool { return v == 1 })
+		require.NoError(t, err)
+		d.Passes(1, f)
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Passes call\n")
+	})
+
+	t.Run("d.Passes with one string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(v int) bool { return v == 1 })
+		require.NoError(t, err)
+		d.Passes(1, f, "one string")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+	})
+
+	t.Run("d.Passes with multiple args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(v int) bool { return v == 1 })
+		require.NoError(t, err)
+		d.Passes(1, f, "got %d %s", 5, "dogs")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+	})
+
+	t.Run("d.Passes with one non-string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(v int) bool { return v == 1 })
+		require.NoError(t, err)
+		d.Passes(1, f, []int{1, 2, 3})
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+	})
+
+	t.Run("d.Passes with multiple non-string args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(v int) bool { return v == 1 })
+		require.NoError(t, err)
+		d.Passes(1, f, []int{1, 2, 3}, "foo")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+	})
+
+	t.Run("d.ValueIs with no name", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(1, 1)
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.ValueIs call\n")
+	})
+
+	t.Run("d.ValueIs with one string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(1, 1, "one string")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+	})
+
+	t.Run("d.ValueIs with multiple args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(1, 1, "got %d %s", 5, "dogs")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+	})
+
+	t.Run("d.ValueIs with one non-string arg", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(1, 1, []int{1, 2, 3})
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+	})
+
+	t.Run("d.ValueIs with multiple non-string args", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.ValueIs(1, 1, []int{1, 2, 3}, "foo")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+	})
 }

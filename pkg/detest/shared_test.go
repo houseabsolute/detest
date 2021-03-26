@@ -94,6 +94,10 @@ func (mt *mockT) Fail() {
 	mt.called()
 }
 
+func (mt *mockT) Fatal(args ...interface{}) {
+	mt.called(args)
+}
+
 func (mt *mockT) WriteString(s string) (int, error) {
 	mt.called(s)
 	return len([]byte(s)), nil
