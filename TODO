@@ -1,7 +1,6 @@
 ## Add testers
 
 * arrays (can reuse slice bits somehow)?
-* structs
 * channels?
 * other things?
 
