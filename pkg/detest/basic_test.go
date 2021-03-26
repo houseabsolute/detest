@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,89 +14,175 @@ import (
 
 func TestIs(t *testing.T) {
 	t.Run("Passing test", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1, "1 == 1")
-		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
 	})
 
 	t.Run("Failing test", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 2, "1 == 2")
-		mockT.AssertCalled(t, "Fail")
+		mT.AssertCalled(t, "Fail")
 	})
 
 	t.Run("Equivalent values do not compare as true", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(int32(1), int64(2), "int32(1) == int64(2)")
-		mockT.AssertCalled(t, "Fail")
+		mT.AssertCalled(t, "Fail")
 	})
 
 	t.Run("Second argument is Comparer - pass", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(42, GTComparer(41), "42 > 41")
-		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
 	})
 
 	t.Run("Second argument is Comparer - fail", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(42, GTComparer(43), "42 > 43")
-		mockT.AssertCalled(t, "Fail")
+		mT.AssertCalled(t, "Fail")
 	})
 
 	t.Run("Can handle nil", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(nil, nil, "nil == nil")
-		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
 	})
+}
+
+// Go has this (so great) thing where there are different types of nils. A
+// bare `nil` is not the same as a nil which comes from a types but
+// uninitialized variable. But they should compare the same. Previously detest
+// was panicking on these or treating them as not the same.
+func TestIsNilTypeHandling(t *testing.T) {
+	var sl []int
+	var ma map[string]int
+	var f func()
+	var p *string
+	var up unsafe.Pointer
+	var c chan int
+
+	type something interface {
+		foo()
+	}
+	var intf something
+
+	for _, v := range []interface{}{sl, ma, f, p, up, c, intf} {
+		desc := describe(v)
+
+		t.Run(fmt.Sprintf("Is(%s == nil)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+
+			d.Is(v, nil, "uninit == nil")
+			mT.AssertNotCalled(t, "Fail")
+			mT.AssertCalled(t, "WriteString", "Assertion ok: uninit == nil\n")
+		})
+		t.Run(fmt.Sprintf("Is(nil == %s)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+			d.Is(nil, v, "nil == uninit")
+			mT.AssertNotCalled(t, "Fail")
+			mT.AssertCalled(t, "WriteString", "Assertion ok: nil == uninit\n")
+		})
+
+		t.Run(fmt.Sprintf("ValueIs(%s == nil)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+
+			d.ValueIs(v, nil, "uninit == nil")
+			mT.AssertNotCalled(t, "Fail")
+			mT.AssertCalled(t, "WriteString", "Assertion ok: uninit == nil\n")
+		})
+		t.Run(fmt.Sprintf("ValueIs(nil == %s)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+			d.ValueIs(nil, v, "nil == uninit")
+			mT.AssertNotCalled(t, "Fail")
+			mT.AssertCalled(t, "WriteString", "Assertion ok: nil == uninit\n")
+		})
+
+		// An uninitialized interface is special. Only like other nil types
+		// above, it's treated as untyped and is equal to any other typed nil.
+		if desc == "something interface" {
+			return
+		}
+
+		for _, v2 := range []interface{}{sl, ma, f, p, up, c} {
+			desc2 := describe(v2)
+			if desc != desc2 {
+				t.Run(fmt.Sprintf("Is(%s != %s)", desc, desc2), func(t *testing.T) {
+					mT := new(mockT)
+					d := NewWithOutput(mT, mT)
+					d.Is(v, v2, "nil == uninit")
+					mT.AssertCalled(t, "Fail")
+				})
+				t.Run(fmt.Sprintf("ValueIs(%s != %s)", desc, desc2), func(t *testing.T) {
+					mT := new(mockT)
+					d := NewWithOutput(mT, mT)
+					d.ValueIs(v, v2, "nil == uninit")
+					mT.AssertCalled(t, "Fail")
+				})
+			}
+		}
+	}
+}
+
+func describe(v interface{}) string {
+	d := describeTypeOfActualValue(v)
+	if d == "nil" {
+		return "something interface"
+	}
+	return d
 }
 
 func TestPasses(t *testing.T) {
 	t.Run("pass", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(42, GTComparer(41), "42 > 41")
-		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
 	})
 
 	t.Run("fail", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(42, GTComparer(43), "42 > 43")
-		mockT.AssertCalled(t, "Fail")
+		mT.AssertCalled(t, "Fail")
 	})
 }
 
 func TestRequire(t *testing.T) {
 	t.Run("d.Require passes", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Require(d.Is(1, 1, "1 == 1"))
-		mockT.AssertNotCalled(t, "Fatal")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
+		mT.AssertNotCalled(t, "Fatal")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
 	})
 
 	t.Run("d.Require fails", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Require(d.Is(1, 2, "1 == 1"))
-		mockT.AssertCalled(t, "Fatal", []interface{}{"required test failed"})
+		mT.AssertCalled(t, "Fatal", []interface{}{"required test failed"})
 	})
 
 	t.Run("d.Require fails and has name", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Require(d.Is(1, 2, "1 == 1"), "must have numeric equality!")
-		mockT.AssertCalled(t, "Fatal", []interface{}{"must have numeric equality!"})
+		mT.AssertCalled(t, "Fatal", []interface{}{"must have numeric equality!"})
 	})
 }
 
@@ -107,11 +194,11 @@ func TestValueIs(t *testing.T) {
 	t.Run("String comparisons", testStringComparisons)
 	t.Run("Struct comparisons", testStructComparisons)
 	t.Run("Can handle nil", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(nil, nil, "nil == nil")
-		mockT.AssertNotCalled(t, "Fail")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
 	})
 }
 
@@ -145,11 +232,11 @@ func testNumericComparisons(t *testing.T) {
 			actualType := reflect.TypeOf(actual)
 			expectType := reflect.TypeOf(expect)
 			t.Run(fmt.Sprintf("Passing test - %s and %s", actualType.Name(), expectType.Name()), func(t *testing.T) {
-				mockT := new(mockT)
-				d := NewWithOutput(mockT, mockT)
+				mT := new(mockT)
+				d := NewWithOutput(mT, mT)
 				d.ValueIs(actual, expect, "1 == 1")
-				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
+				mT.AssertNotCalled(t, "Fail")
+				mT.AssertCalled(t, "WriteString", "Assertion ok: 1 == 1\n")
 			})
 		}
 	}
@@ -168,11 +255,11 @@ func testComplexComparisons(t *testing.T) {
 			actualType := reflect.TypeOf(actual)
 			expectType := reflect.TypeOf(expect)
 			t.Run(fmt.Sprintf("Passing test - %s and %s", actualType.Name(), expectType.Name()), func(t *testing.T) {
-				mockT := new(mockT)
-				d := NewWithOutput(mockT, mockT)
+				mT := new(mockT)
+				d := NewWithOutput(mT, mT)
 				d.ValueIs(actual, expect, "1,1 == 1,1")
-				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Assertion ok: 1,1 == 1,1\n")
+				mT.AssertNotCalled(t, "Fail")
+				mT.AssertCalled(t, "WriteString", "Assertion ok: 1,1 == 1,1\n")
 			})
 		}
 	}
@@ -197,11 +284,11 @@ func testOverflowHandling(t *testing.T, actual, expect, larger interface{}) {
 	t.Run(
 		fmt.Sprintf("Failing test - %s and %s with overflow", actualType.Name(), expectType.Name()),
 		func(t *testing.T) {
-			mockT := new(mockT)
-			d := NewWithOutput(mockT, mockT)
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
 			d.ValueIs(actual, expect, "overflow")
-			mockT.AssertCalled(t, "Fail")
-			call := mockT.FindCall("WriteString")
+			mT.AssertCalled(t, "Fail")
+			call := mT.FindCall("WriteString")
 			assert.NotNil(t, call, "WriteString was called")
 			assert.Len(t, call.Args, 1, "WriteString was called with one argument")
 			assert.Regexp(
@@ -249,11 +336,11 @@ func testCannotConvert(t *testing.T, actual, expect interface{}) {
 	t.Run(
 		fmt.Sprintf("Failing test - cannot convert between %s and %s", actualType.Name(), expectType.Name()),
 		func(t *testing.T) {
-			mockT := new(mockT)
-			d := NewWithOutput(mockT, mockT)
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
 			d.ValueIs(actual, expect, "overflow")
-			mockT.AssertCalled(t, "Fail")
-			call := mockT.FindCall("WriteString")
+			mT.AssertCalled(t, "Fail")
+			call := mT.FindCall("WriteString")
 			assert.NotNil(t, call, "WriteString was called")
 			assert.Len(t, call.Args, 1, "WriteString was called with one argument")
 			assert.Regexp(
@@ -281,11 +368,11 @@ func testStringComparisons(t *testing.T) {
 			actualType := reflect.TypeOf(actual)
 			expectType := reflect.TypeOf(expect)
 			t.Run(fmt.Sprintf("Passing test - %s and %s", actualType.Name(), expectType.Name()), func(t *testing.T) {
-				mockT := new(mockT)
-				d := NewWithOutput(mockT, mockT)
+				mT := new(mockT)
+				d := NewWithOutput(mT, mT)
 				d.ValueIs(actual, expect, "\"foo\" == \"foo\"")
-				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Assertion ok: \"foo\" == \"foo\"\n")
+				mT.AssertNotCalled(t, "Fail")
+				mT.AssertCalled(t, "WriteString", "Assertion ok: \"foo\" == \"foo\"\n")
 			})
 		}
 	}
@@ -311,11 +398,11 @@ func testStructComparisons(t *testing.T) {
 			actualType := reflect.TypeOf(actual)
 			expectType := reflect.TypeOf(expect)
 			t.Run(fmt.Sprintf("Passing test - %s and %s", actualType.Name(), expectType.Name()), func(t *testing.T) {
-				mockT := new(mockT)
-				d := NewWithOutput(mockT, mockT)
+				mT := new(mockT)
+				d := NewWithOutput(mT, mT)
 				d.ValueIs(actual, expect, "{val: 1} == {val: 1}")
-				mockT.AssertNotCalled(t, "Fail")
-				mockT.AssertCalled(t, "WriteString", "Assertion ok: {val: 1} == {val: 1}\n")
+				mT.AssertNotCalled(t, "Fail")
+				mT.AssertCalled(t, "WriteString", "Assertion ok: {val: 1} == {val: 1}\n")
 			})
 		}
 	}
@@ -323,117 +410,117 @@ func testStructComparisons(t *testing.T) {
 
 func TestNameGeneration(t *testing.T) {
 	t.Run("d.Is with no name", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1)
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Is call\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Is call\n")
 	})
 
 	t.Run("d.Is with one string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1, "one string")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
 	})
 
 	t.Run("d.Is with multiple args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1, "got %d %s", 5, "dogs")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
 	})
 
 	t.Run("d.Is with one non-string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1, []int{1, 2, 3})
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
 	})
 
 	t.Run("d.Is with multiple non-string args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.Is(1, 1, []int{1, 2, 3}, "foo")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
 	})
 
 	t.Run("d.Passes with no name", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		f, err := d.Func(func(v int) bool { return v == 1 })
 		require.NoError(t, err)
 		d.Passes(1, f)
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Passes call\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.Passes call\n")
 	})
 
 	t.Run("d.Passes with one string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		f, err := d.Func(func(v int) bool { return v == 1 })
 		require.NoError(t, err)
 		d.Passes(1, f, "one string")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
 	})
 
 	t.Run("d.Passes with multiple args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		f, err := d.Func(func(v int) bool { return v == 1 })
 		require.NoError(t, err)
 		d.Passes(1, f, "got %d %s", 5, "dogs")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
 	})
 
 	t.Run("d.Passes with one non-string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		f, err := d.Func(func(v int) bool { return v == 1 })
 		require.NoError(t, err)
 		d.Passes(1, f, []int{1, 2, 3})
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
 	})
 
 	t.Run("d.Passes with multiple non-string args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		f, err := d.Func(func(v int) bool { return v == 1 })
 		require.NoError(t, err)
 		d.Passes(1, f, []int{1, 2, 3}, "foo")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
 	})
 
 	t.Run("d.ValueIs with no name", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(1, 1)
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.ValueIs call\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: unnamed d.ValueIs call\n")
 	})
 
 	t.Run("d.ValueIs with one string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(1, 1, "one string")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: one string\n")
 	})
 
 	t.Run("d.ValueIs with multiple args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(1, 1, "got %d %s", 5, "dogs")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: got 5 dogs\n")
 	})
 
 	t.Run("d.ValueIs with one non-string arg", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(1, 1, []int{1, 2, 3})
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]\n")
 	})
 
 	t.Run("d.ValueIs with multiple non-string args", func(t *testing.T) {
-		mockT := new(mockT)
-		d := NewWithOutput(mockT, mockT)
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
 		d.ValueIs(1, 1, []int{1, 2, 3}, "foo")
-		mockT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: [1 2 3]%!(EXTRA string=foo)\n")
 	})
 }

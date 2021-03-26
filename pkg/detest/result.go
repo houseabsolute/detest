@@ -194,15 +194,22 @@ func (v *value) description() string {
 		return v.desc
 	}
 
-	v.desc = describeTypeOfValue(v.value)
+	v.desc = describeTypeOfActualValue(v.value)
 	if v.value == nil {
 		v.desc += " <nil>"
 	}
 	return v.desc
 }
 
-func describeTypeOfValue(val interface{}) string {
+func describeTypeOfActualValue(val interface{}) string {
 	return describeType(reflect.TypeOf(val))
+}
+
+func describeTypeOfReflectValue(v reflect.Value) string {
+	if !v.IsValid() {
+		return "nil"
+	}
+	return describeType(v.Type())
 }
 
 func describeType(ty reflect.Type) string {

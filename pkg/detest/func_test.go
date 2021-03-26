@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFunc(t *testing.T) {
@@ -20,6 +21,7 @@ func TestFunc(t *testing.T) {
 		{"Func with name fails with description", funcWithNameFailsWithDescription},
 		{"Func cannot accept the given argument", funcCannotAcceptArgument},
 		{"Func creation errors", funcCreationErrors},
+		{"Func handles unexpected nil", funcHandlesUnexpectedNil},
 	}
 
 	for _, test := range tests {
@@ -73,7 +75,7 @@ func funcWithNoNameFails(t *testing.T) {
 		"Func checks that array is less than 4 elements",
 	)
 	mockT.AssertCalled(t, "Fail")
-	assert.Len(t, r.record, 1, "one state was recorded")
+	require.Len(t, r.record, 1, "one state was recorded")
 	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 	assert.Equal(
 		t,
@@ -111,7 +113,7 @@ func funcWithNameFails(t *testing.T) {
 		"Func checks that array is less than 4 elements",
 	)
 	mockT.AssertCalled(t, "Fail")
-	assert.Len(t, r.record, 1, "one state was recorded")
+	require.Len(t, r.record, 1, "one state was recorded")
 	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 	assert.Equal(
 		t,
@@ -149,7 +151,7 @@ func funcWithNoNameFailsWithDescription(t *testing.T) {
 		"Func checks that array is less than 4 elements",
 	)
 	mockT.AssertCalled(t, "Fail")
-	assert.Len(t, r.record, 1, "one state was recorded")
+	require.Len(t, r.record, 1, "one state was recorded")
 	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 	assert.Equal(
 		t,
@@ -187,7 +189,7 @@ func funcWithNameFailsWithDescription(t *testing.T) {
 		"Func checks that array is less than 4 elements",
 	)
 	mockT.AssertCalled(t, "Fail")
-	assert.Len(t, r.record, 1, "one state was recorded")
+	require.Len(t, r.record, 1, "one state was recorded")
 	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 	assert.Equal(
 		t,
@@ -225,7 +227,7 @@ func funcCannotAcceptArgument(t *testing.T) {
 		"Func checks that array is less than 4 elements",
 	)
 	mockT.AssertCalled(t, "Fail")
-	assert.Len(t, r.record, 1, "one state was recorded")
+	require.Len(t, r.record, 1, "one state was recorded")
 	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
 	assert.Equal(
 		t,
@@ -307,5 +309,43 @@ func funcCreationErrors(t *testing.T) {
 		err,
 		"the function passed to detest.Func() must return a string as its second argument but yours returns an int",
 		"function returns an int instead of a string",
+	)
+}
+
+func funcHandlesUnexpectedNil(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	f, err := d.Func(func(s []int) bool {
+		return len(s) < 4
+	})
+	assert.NoError(t, err, "no error calling Func()")
+	r := NewRecorder(d)
+	r.Is(
+		nil,
+		f,
+		"len(s) < 4",
+	)
+	mockT.AssertCalled(t, "Fail")
+	require.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: nil, desc: "nil <nil>"},
+			expect: nil,
+			op:     "func()",
+			pass:   false,
+			path: []Path{
+				{
+					data:   "nil",
+					callee: "Func()",
+					caller: "detest.(*DetestRecorder).Is",
+				},
+			},
+			where:       inUsage,
+			description: "Called a function as a comparison that takes a []int but it was passed a nil",
+		},
+		r.record[0].output[0].result,
+		"got the expected result",
 	)
 }

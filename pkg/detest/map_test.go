@@ -17,6 +17,7 @@ func TestMap(t *testing.T) {
 		{"Failing test", mapFailingTest},
 		{"Mix of tests", mapMixPassingAndFailingTests},
 		{"Passed non-map to Map", mapPassedNonMap},
+		{"Passed nil to Map", mapPassedNil},
 		{"Key called that does not exist in the map", mapKeyCalledThatDoesNotExist},
 		{"AllValues pass", mapPassWithAllValues},
 		{"AllValues fail", mapFailWithAllValues},
@@ -187,6 +188,40 @@ func mapPassedNonMap(t *testing.T) {
 			}},
 			where:       inDataStructure,
 			description: "Called detest.Map() but the value being tested isn't a map, it's an int",
+		},
+		r.record[0].output[0].result,
+		"got the expected result",
+	)
+}
+
+func mapPassedNil(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	r := NewRecorder(d)
+	r.Is(
+		nil,
+		r.Map(func(mt *MapTester) {
+			mt.Key(0, 1)
+		}),
+		"non-map",
+	)
+	mockT.AssertCalled(t, "Fail")
+	assert.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: nil, desc: "nil <nil>"},
+			expect: nil,
+			op:     "[]",
+			pass:   false,
+			path: []Path{{
+				data:   "nil",
+				callee: "detest.(*D).Map",
+				caller: "detest.(*DetestRecorder).Is",
+			}},
+			where:       inDataStructure,
+			description: "Called detest.Map() but the value being tested isn't a map, it's a nil",
 		},
 		r.record[0].output[0].result,
 		"got the expected result",

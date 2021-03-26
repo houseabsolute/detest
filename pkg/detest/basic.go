@@ -91,17 +91,52 @@ func (eec ExactEqualityComparer) Compare(d *D) {
 		op:     "==",
 	}
 
-	if reflect.TypeOf(expect) == actualType {
+	expectType := reflect.TypeOf(expect)
+	if actualType == expectType {
 		result.pass = exactCompare(actual, expect)
 		if !result.pass {
 			result.where = inValue
 		}
 	} else {
-		result.pass = false
-		result.where = inType
+		result.pass = nilValuesAreEqual(actual, expect)
+		if result.pass {
+			result.where = inType
+		}
 	}
 
 	d.AddResult(result)
+}
+
+func nilValuesAreEqual(actual, expect interface{}) bool {
+	actualValue := reflect.ValueOf(actual)
+	expectValue := reflect.ValueOf(expect)
+	// If one value is a untyped nil and the other is a typed nil, they
+	// are equal. However, if _both_ are typed nils and they're not of the
+	// same type, they're not equal. I love Go.
+	if !actualValue.IsValid() {
+		if !expectValue.IsValid() || (isNilable(expectValue.Kind()) && expectValue.IsNil()) {
+			return true
+		}
+	} else if !expectValue.IsValid() {
+		// We already know that actualValue.IsValid() returned true
+		if isNilable(actualValue.Kind()) && actualValue.IsNil() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isNilable(kind reflect.Kind) bool {
+	return kind == reflect.Array ||
+		kind == reflect.Chan ||
+		kind == reflect.Func ||
+		kind == reflect.Interface ||
+		kind == reflect.Map ||
+		kind == reflect.Ptr ||
+		kind == reflect.Slice ||
+		kind == reflect.Struct ||
+		kind == reflect.UnsafePointer
 }
 
 func exactCompare(actual, expect interface{}) bool {
@@ -179,16 +214,16 @@ func (vec ValueEqualityComparer) Compare(d *D) {
 		return
 	}
 
-	if !actualType.ConvertibleTo(expectType) {
-		result.pass = false
-		result.where = inType
-		result.description = cannotConvertMessage(actualType, expectType)
+	if nilValuesAreEqual(actual, expect) || actual == nil && expect == nil {
+		result.pass = true
 		d.AddResult(result)
 		return
 	}
 
-	if actual == nil && expect == nil {
-		result.pass = true
+	if !actualType.ConvertibleTo(expectType) {
+		result.pass = false
+		result.where = inType
+		result.description = cannotConvertMessage(actualType, expectType)
 		d.AddResult(result)
 		return
 	}

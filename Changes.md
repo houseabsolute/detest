@@ -1,3 +1,14 @@
+## 0.0.3
+
+* Fixed a number of bugs with the handling of `nil` values. If you called
+  `d.Is(nil, d.Map(...))` you'd get a panic instead of a failure. The same
+  applied to `d.Slice`, `d.Struct`, and the `FuncComparer` returned by
+  `d.Func` and `d.NamedFunc`. If you called `d.Is(nil, ...)` it would
+  sometimes consider the two argument not nil, if the second argument was a
+  nil of a specific type (like you get if you write `var s *string` or `var s
+  []int`).
+
+
 ## 0.0.2  2021-03-26
 
 * Added a `d.Passes` method. This works just like `d.Is` except that the

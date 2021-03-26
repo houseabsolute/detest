@@ -70,11 +70,11 @@ func (d *D) newFunc(with interface{}, name, called string) (FuncComparer, error)
 func (fc FuncComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 
-	d.PushPath(d.NewPath(describeType(v.Type()), 1, fc.name))
+	d.PushPath(d.NewPath(describeTypeOfReflectValue(v), 1, fc.name))
 	defer d.PopPath()
 
 	inType := fc.comparer.Type().In(0)
-	if v.Type() != inType {
+	if !v.IsValid() || v.Type() != inType {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
 			pass:   false,
@@ -83,7 +83,7 @@ func (fc FuncComparer) Compare(d *D) {
 			description: fmt.Sprintf(
 				"Called a function as a comparison that takes %s but it was passed %s",
 				articleize(describeType(inType)),
-				articleize(describeType(v.Type())),
+				articleize(describeTypeOfReflectValue(v)),
 			),
 		})
 		return

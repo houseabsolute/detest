@@ -16,6 +16,7 @@ func TestSlice(t *testing.T) {
 		{"Failing test", sliceFailingTest},
 		{"Mix of tests", sliceMixPassingAndFailingTests},
 		{"Passed non-slice to Slice", slicePassedNonSlice},
+		{"Passed nil to Slice", slicePassedNil},
 		{"Idx called past end of slice", sliceIdxCalledPastEndOfSlice},
 		{"AllValues pass", slicePassWithAllValues},
 		{"AllValues fail", sliceFailWithAllValues},
@@ -158,6 +159,40 @@ func sliceMixPassingAndFailingTests(t *testing.T) {
 	)
 }
 
+func slicePassedNil(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	r := NewRecorder(d)
+	r.Is(
+		nil,
+		r.Slice(func(st *SliceTester) {
+			st.Idx(0, 1)
+			st.End()
+		}),
+		"non-slice",
+	)
+	mockT.AssertCalled(t, "Fail")
+	assert.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: nil, desc: "nil <nil>"},
+			expect: nil,
+			op:     "[]",
+			pass:   false,
+			path: []Path{{
+				data:   "nil",
+				callee: "detest.(*D).Slice",
+				caller: "detest.(*DetestRecorder).Is",
+			}},
+			where:       inDataStructure,
+			description: "Called detest.Slice() but the value being tested isn't a slice, it's a nil",
+		},
+		r.record[0].output[0].result,
+		"got the expected result",
+	)
+}
 func slicePassedNonSlice(t *testing.T) {
 	mockT := new(mockT)
 	d := NewWithOutput(mockT, mockT)

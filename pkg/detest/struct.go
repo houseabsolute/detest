@@ -32,10 +32,13 @@ type StructTester struct {
 func (sc StructComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 
-	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Struct"))
+	d.PushPath(d.NewPath(describeTypeOfReflectValue(v), 1, "detest.(*D).Struct"))
 	defer d.PopPath()
 
-	if v.Kind() != reflect.Struct && (v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct) {
+	if !v.IsValid() ||
+		(v.Kind() != reflect.Struct &&
+			(v.Kind() != reflect.Ptr &&
+				v.Elem().Kind() != reflect.Struct)) {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
 			pass:   false,
@@ -43,7 +46,7 @@ func (sc StructComparer) Compare(d *D) {
 			op:     ".",
 			description: fmt.Sprintf(
 				"Called detest.Struct() but the value being tested isn't a struct, it's %s",
-				articleize(describeType(v.Type())),
+				articleize(describeTypeOfReflectValue(v)),
 			),
 		})
 		return

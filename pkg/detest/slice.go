@@ -30,10 +30,10 @@ type SliceTester struct {
 // slice's content.
 func (sc SliceComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
-	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Slice"))
+	d.PushPath(d.NewPath(describeTypeOfReflectValue(v), 1, "detest.(*D).Slice"))
 	defer d.PopPath()
 
-	if v.Kind() != reflect.Slice {
+	if !v.IsValid() || v.Kind() != reflect.Slice {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
 			pass:   false,
@@ -41,7 +41,7 @@ func (sc SliceComparer) Compare(d *D) {
 			op:     "[]",
 			description: fmt.Sprintf(
 				"Called detest.Slice() but the value being tested isn't a slice, it's %s",
-				articleize(describeType(v.Type())),
+				articleize(describeTypeOfReflectValue(v)),
 			),
 		})
 		return

@@ -32,7 +32,7 @@ type MapTester struct {
 func (mc MapComparer) Compare(d *D) {
 	v := reflect.ValueOf(d.Actual())
 
-	d.PushPath(d.NewPath(describeType(v.Type()), 1, "detest.(*D).Map"))
+	d.PushPath(d.NewPath(describeTypeOfReflectValue(v), 1, "detest.(*D).Map"))
 	defer d.PopPath()
 
 	if v.Kind() != reflect.Map {
@@ -43,7 +43,7 @@ func (mc MapComparer) Compare(d *D) {
 			op:     "[]",
 			description: fmt.Sprintf(
 				"Called detest.Map() but the value being tested isn't a map, it's %s",
-				articleize(describeType(v.Type())),
+				articleize(describeTypeOfReflectValue(v)),
 			),
 		})
 		return
@@ -63,7 +63,7 @@ func (mt *MapTester) Key(key interface{}, expect interface{}) {
 	defer mt.d.PopPath()
 
 	kv := reflect.ValueOf(key)
-	if kv.Type() != v.Type().Key() {
+	if !kv.IsValid() || kv.Type() != v.Type().Key() {
 		mt.d.AddResult(result{
 			actual: newValue(mt.d.Actual()),
 			pass:   false,
@@ -71,7 +71,7 @@ func (mt *MapTester) Key(key interface{}, expect interface{}) {
 			op:     fmt.Sprintf("[%v]", key),
 			description: fmt.Sprintf(
 				"Attempted to look up a map using a key that is %s but this map uses %s as a key",
-				articleize(describeType(kv.Type())),
+				articleize(describeTypeOfReflectValue(kv)),
 				articleize(describeType(v.Type().Key())),
 			),
 		})
