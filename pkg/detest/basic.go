@@ -33,6 +33,14 @@ func (d *D) Is(actual, expect interface{}, name string) bool {
 	return d.ok(name)
 }
 
+// Passes tests that the given value passes the comparison given. The first
+// variable is the actual variable and the second is what is expected. The
+// `expect` argument must implement the detest.Comparer interface. The final
+// argument is the assertion name.
+func (d *D) Passes(actual interface{}, expect Comparer, name string) bool {
+	return d.Is(actual, expect, name)
+}
+
 // Equal takes an expected literal value and returns an ExactEqualityComparer
 // for later use.
 func (d *D) Equal(expect interface{}) ExactEqualityComparer {

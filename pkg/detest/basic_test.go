@@ -57,6 +57,23 @@ func TestIs(t *testing.T) {
 	})
 }
 
+func TestPasses(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(42, GTComparer(41), "42 > 41")
+		mockT.AssertNotCalled(t, "Fail")
+		mockT.AssertCalled(t, "WriteString", "Assertion ok: 42 > 41\n")
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		d.Is(42, GTComparer(43), "42 > 43")
+		mockT.AssertCalled(t, "Fail")
+	})
+}
+
 func TestValueIs(t *testing.T) {
 	t.Run("Numeric comparisons", testNumericComparisons)
 	t.Run("Numeric comparison overflow failures", testNumericComparisonOverflowFailures)
