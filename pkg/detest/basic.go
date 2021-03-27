@@ -171,12 +171,13 @@ type ValueEqualityComparer struct {
 }
 
 // ValueIs tests that two variables contain the same value. The first variable
-// is the actual variable and the second is what is expected. The `expect`
-// argument can be either a literal value or anything that implements the
-// detest.Comparer interface. The final argument is the assertion name.
+// is the actual variable and the second is what is expected.
 //
-// If the two variables are of different types this is fine as long as one
-// type can be converted to the other (for example `int32` and `int64`).
+// The final arguments follow the same rules as `d.Is`.
+//
+// If the two variables to be compared are of different types this is fine as
+// long as one type can be converted to the other (for example `int32` and
+// `int64`).
 //
 // Under the hood this is implemented with the ValueEqualityComparer.
 func (d *D) ValueIs(actual, expect interface{}, args ...interface{}) bool {

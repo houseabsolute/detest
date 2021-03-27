@@ -1,3 +1,9 @@
+## 0.0.6  2021-03-27
+
+* Clarified that `d.ValueIs` only accepts literal values as its second
+  argument, not a `Comparer`.
+
+
 ## 0.0.5  2021-03-27
 
 * Fix handling of functions passed to `d.Func` which take an interface as an
