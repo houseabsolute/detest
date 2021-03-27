@@ -1,3 +1,12 @@
+## 0.0.5  2021-03-27
+
+* Fix handling of functions passed to `d.Func` which take an interface as an
+  argument. No matter what was passed to them detest would treat it as an
+  error because the types didn't match.
+* Make it possible to call additional detest assertion methods, like `d.Is`,
+  inside a func passed to `d.Func`.
+
+
 ## 0.0.4  2021-03-26
 
 * Even more `nil` fixes. The fix in the last release for passing `nil` to a

@@ -68,16 +68,30 @@ func (d *D) newFunc(with interface{}, name, called string) (FuncComparer, error)
 // `d.Actual()`. The function is expected to return a boolean indicating
 // success or failure.
 func (fc FuncComparer) Compare(d *D) {
-	v := reflect.ValueOf(d.Actual())
+	actual := d.Actual()
+	v := reflect.ValueOf(actual)
 
 	d.PushPath(d.NewPath(describeTypeOfReflectValue(v), 1, fc.name))
 	defer d.PopPath()
 
 	inType := fc.comparer.Type().In(0)
-	if (v.IsValid() && v.Type() != inType) ||
-		(!v.IsValid() && !isNilable(inType.Kind())) {
+	okInput := false
+	if v.IsValid() {
+		// Either the types are the same or the input implements the input
+		// type is an interface and the value implements it.
+		if v.Type() == inType ||
+			(inType.Kind() == reflect.Interface && v.Type().Implements(inType)) {
+			okInput = true
+		}
+	} else {
+		if isNilable(inType.Kind()) {
+			okInput = true
+		}
+	}
+
+	if !okInput {
 		d.AddResult(result{
-			actual: newValue(d.Actual()),
+			actual: newValue(actual),
 			pass:   false,
 			op:     "func()",
 			where:  inUsage,
@@ -108,7 +122,7 @@ func (fc FuncComparer) Compare(d *D) {
 	}
 	ret := fc.comparer.Call([]reflect.Value{v})
 	r := result{
-		actual: newValue(d.Actual()),
+		actual: newValue(actual),
 		pass:   ret[0].Bool(),
 		op:     "func()",
 	}

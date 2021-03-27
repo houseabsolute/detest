@@ -22,14 +22,14 @@ func NewRecorder(d *D) *DetestRecorder {
 	}
 }
 
-func (d *DetestRecorder) Is(actual, expect interface{}, name string) bool {
-	ok := d.D.Is(actual, expect, name)
+func (d *DetestRecorder) Is(actual, expect interface{}, args ...interface{}) bool {
+	ok := d.D.Is(actual, expect, args...)
 	d.record = append(d.record, d.D.state)
 	return ok
 }
 
-func (d *DetestRecorder) Passes(actual, expect interface{}, name string) bool {
-	ok := d.D.Passes(actual, expect.(Comparer), name)
+func (d *DetestRecorder) Passes(actual, expect interface{}, args ...interface{}) bool {
+	ok := d.D.Passes(actual, expect.(Comparer), args...)
 	d.record = append(d.record, d.D.state)
 	return ok
 }

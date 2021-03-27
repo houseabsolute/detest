@@ -1,7 +1,9 @@
 package detest
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,8 +23,10 @@ func TestFunc(t *testing.T) {
 		{"Func with name fails with description", funcWithNameFailsWithDescription},
 		{"Func cannot accept the given argument", funcCannotAcceptArgument},
 		{"Func creation errors", funcCreationErrors},
+		{"Func input type is interface", funcInputTypeIsInterface},
 		{"Func handles untyped nil", funcHandlesUntypedNil},
 		{"Func handles typed nil", funcHandlesTypedNil},
+		{"Func call additional detest methods", funcCallsAdditionalDetestMethods},
 	}
 
 	for _, test := range tests {
@@ -36,7 +40,7 @@ func funcWithNoNamePasses(t *testing.T) {
 	f, err := d.Func(func(s []int) bool {
 		return len(s) < 4
 	})
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	d.Passes(
 		[]int{1, 2, 3},
 		f,
@@ -52,7 +56,7 @@ func funcWithNamePasses(t *testing.T) {
 	f, err := d.NamedFunc(func(s []int) bool {
 		return len(s) < 4
 	}, "Has a name")
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	d.Passes(
 		[]int{1, 2, 3},
 		f,
@@ -68,7 +72,7 @@ func funcWithNoNameFails(t *testing.T) {
 	f, err := d.Func(func(s []int) bool {
 		return len(s) < 4
 	})
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		[]int{1, 2, 3, 4},
@@ -106,7 +110,7 @@ func funcWithNameFails(t *testing.T) {
 	f, err := d.NamedFunc(func(s []int) bool {
 		return len(s) < 4
 	}, "Has a name")
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		[]int{1, 2, 3, 4},
@@ -144,7 +148,7 @@ func funcWithNoNameFailsWithDescription(t *testing.T) {
 	f, err := d.Func(func(s []int) (bool, string) {
 		return len(s) < 4, fmt.Sprintf("Slice is %d elements long but cannot be more than 3", len(s))
 	})
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		[]int{1, 2, 3, 4},
@@ -182,7 +186,7 @@ func funcWithNameFailsWithDescription(t *testing.T) {
 	f, err := d.NamedFunc(func(s []int) (bool, string) {
 		return len(s) < 4, fmt.Sprintf("Slice is %d elements long but cannot be more than 3", len(s))
 	}, "Has a name")
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		[]int{1, 2, 3, 4},
@@ -220,7 +224,7 @@ func funcCannotAcceptArgument(t *testing.T) {
 	f, err := d.NamedFunc(func(s []int) bool {
 		return len(s) < 4
 	}, "Has a name")
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		42,
@@ -313,13 +317,60 @@ func funcCreationErrors(t *testing.T) {
 	)
 }
 
+func funcInputTypeIsInterface(t *testing.T) {
+	t.Run("error interface input with wrong error", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(err error) bool {
+			return err != nil && errors.Is(err, os.ErrNotExist)
+		})
+		require.NoError(t, err, "no error calling Func()")
+		d.Passes(
+			errors.New("foo"),
+			f,
+			"can pass concrete value to func that takes interface",
+		)
+		mockT.AssertCalled(t, "Fail")
+	})
+
+	t.Run("error interface input with right error", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(err error) bool {
+			return err != nil && errors.Is(err, os.ErrNotExist)
+		})
+		require.NoError(t, err, "no error calling Func()")
+		d.Passes(
+			os.ErrNotExist,
+			f,
+			"can pass concrete value to func that takes interface",
+		)
+		mockT.AssertNotCalled(t, "Fail")
+	})
+
+	t.Run("error interface input with wrong type", func(t *testing.T) {
+		mockT := new(mockT)
+		d := NewWithOutput(mockT, mockT)
+		f, err := d.Func(func(err error) bool {
+			return err != nil && errors.Is(err, os.ErrNotExist)
+		})
+		require.NoError(t, err, "no error calling Func()")
+		d.Passes(
+			42,
+			f,
+			"can pass wrong type to func that takes interface",
+		)
+		mockT.AssertCalled(t, "Fail")
+	})
+}
+
 func funcHandlesUntypedNil(t *testing.T) {
 	mockT := new(mockT)
 	d := NewWithOutput(mockT, mockT)
 	f, err := d.Func(func(s []int) bool {
 		return s != nil && len(s) < 4
 	})
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	r.Passes(
 		nil,
@@ -357,7 +408,7 @@ func funcHandlesTypedNil(t *testing.T) {
 	f, err := d.Func(func(s []int) bool {
 		return s != nil && len(s) < 4
 	})
-	assert.NoError(t, err, "no error calling Func()")
+	require.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
 	var s []int
 	r.Passes(
@@ -387,5 +438,69 @@ func funcHandlesTypedNil(t *testing.T) {
 		},
 		r.record[0].output[0].result,
 		"got the expected result",
+	)
+}
+
+type myError struct {
+	size int
+}
+
+func (m myError) Error() string {
+	return "foo"
+}
+
+func funcCallsAdditionalDetestMethods(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	r := NewRecorder(d)
+	f, err := r.Func(func(err error) bool {
+		var realErr myError
+		return r.Is(errors.As(err, &realErr), true) && r.Is(realErr.size, 42)
+	})
+	require.NoError(t, err, "no error calling Func()")
+	e := myError{size: 42}
+	r.Passes(
+		e,
+		f,
+		"myError 42",
+	)
+	mockT.AssertNotCalled(t, "Fail")
+	require.Len(t, r.record, 3, "three states were recorded")
+	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: true, desc: ""},
+			expect: &value{value: true, desc: ""},
+			op:     "==",
+			pass:   true,
+			path: []Path{
+				{
+					data:   "bool",
+					callee: "detest.(*D).Equal",
+					caller: "detest.(*DetestRecorder).Is",
+				},
+			},
+		},
+		r.record[0].output[0].result,
+		"got the expected result for first assertion",
+	)
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: 42, desc: ""},
+			expect: &value{value: 42, desc: ""},
+			op:     "==",
+			pass:   true,
+			path: []Path{
+				{
+					data:   "int",
+					callee: "detest.(*D).Equal",
+					caller: "detest.(*DetestRecorder).Is",
+				},
+			},
+		},
+		r.record[1].output[0].result,
+		"got the expected result for second assertion",
 	)
 }
