@@ -8,6 +8,8 @@
   nil of a specific type (like you get if you write `var s *string` or `var s
   []int`).
 * Calling `d.Passes` recorded the call's path as `d.Is` instead of `d.Passes`.
+* Fixed various bugs in struct testing that could lead to panics instead of
+  test failures.
 
 
 ## 0.0.2  2021-03-26

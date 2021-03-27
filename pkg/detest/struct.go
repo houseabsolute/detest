@@ -36,9 +36,9 @@ func (sc StructComparer) Compare(d *D) {
 	defer d.PopPath()
 
 	if !v.IsValid() ||
-		(v.Kind() != reflect.Struct &&
-			(v.Kind() != reflect.Ptr &&
-				v.Elem().Kind() != reflect.Struct)) {
+		v.Kind() != reflect.Struct ||
+		(v.Kind() == reflect.Ptr &&
+			v.Elem().Kind() != reflect.Struct) {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
 			pass:   false,
@@ -74,7 +74,9 @@ func (st *StructTester) Field(field string, expect interface{}) {
 	}
 
 	f := v2.FieldByName(field)
-	f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+	if f.IsValid() {
+		f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+	}
 	if !f.IsValid() {
 		st.d.AddResult(result{
 			actual:      newValue(st.d.Actual()),
