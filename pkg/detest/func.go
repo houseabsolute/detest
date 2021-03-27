@@ -77,8 +77,8 @@ func (fc FuncComparer) Compare(d *D) {
 	inType := fc.comparer.Type().In(0)
 	okInput := false
 	if v.IsValid() {
-		// Either the types are the same or the input implements the input
-		// type is an interface and the value implements it.
+		// Either the types are the same or the input type is an interface and
+		// the value implements it.
 		if v.Type() == inType ||
 			(inType.Kind() == reflect.Interface && v.Type().Implements(inType)) {
 			okInput = true
