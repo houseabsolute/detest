@@ -74,7 +74,8 @@ func (fc FuncComparer) Compare(d *D) {
 	defer d.PopPath()
 
 	inType := fc.comparer.Type().In(0)
-	if !v.IsValid() || v.Type() != inType {
+	if (v.IsValid() && v.Type() != inType) ||
+		(!v.IsValid() && !isNilable(inType.Kind())) {
 		d.AddResult(result{
 			actual: newValue(d.Actual()),
 			pass:   false,
@@ -89,6 +90,22 @@ func (fc FuncComparer) Compare(d *D) {
 		return
 	}
 
+	// If it's a bare nil we need to make a zero value of whatever type the
+	// func is expecting. If we try to just pass the (invalid) bare nil, then
+	// the `.Call(...)` will panic with "Call using zero Value argument".
+	//
+	// This seems really wonky but AFAICT this is actually what the
+	// interpreter is doing to! Run this code to see it in action:
+	//
+	// f := func(s []int) {
+	//     log.Printf("%v", reflect.TypeOf(s))
+	// }
+	// f(s)
+	// f(nil)
+
+	if !v.IsValid() {
+		v = reflect.Zero(inType)
+	}
 	ret := fc.comparer.Call([]reflect.Value{v})
 	r := result{
 		actual: newValue(d.Actual()),

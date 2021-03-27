@@ -1,3 +1,9 @@
+## 0.0.4  2021-03-26
+
+* Even more `nil` fixes. The fix in the last release for passing `nil` to a
+  `FuncComparer` wasn't quite right. I think I got it this time.
+
+
 ## 0.0.3  2021-03-26
 
 * Fixed a number of bugs with the handling of `nil` values. If you called

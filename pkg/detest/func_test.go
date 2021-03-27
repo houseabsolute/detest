@@ -21,7 +21,8 @@ func TestFunc(t *testing.T) {
 		{"Func with name fails with description", funcWithNameFailsWithDescription},
 		{"Func cannot accept the given argument", funcCannotAcceptArgument},
 		{"Func creation errors", funcCreationErrors},
-		{"Func handles unexpected nil", funcHandlesUnexpectedNil},
+		{"Func handles untyped nil", funcHandlesUntypedNil},
+		{"Func handles typed nil", funcHandlesTypedNil},
 	}
 
 	for _, test := range tests {
@@ -312,11 +313,11 @@ func funcCreationErrors(t *testing.T) {
 	)
 }
 
-func funcHandlesUnexpectedNil(t *testing.T) {
+func funcHandlesUntypedNil(t *testing.T) {
 	mockT := new(mockT)
 	d := NewWithOutput(mockT, mockT)
 	f, err := d.Func(func(s []int) bool {
-		return len(s) < 4
+		return s != nil && len(s) < 4
 	})
 	assert.NoError(t, err, "no error calling Func()")
 	r := NewRecorder(d)
@@ -342,8 +343,47 @@ func funcHandlesUnexpectedNil(t *testing.T) {
 					caller: "detest.(*DetestRecorder).Passes",
 				},
 			},
-			where:       inUsage,
-			description: "Called a function as a comparison that takes a []int but it was passed a nil",
+			where:       inValue,
+			description: "",
+		},
+		r.record[0].output[0].result,
+		"got the expected result",
+	)
+}
+
+func funcHandlesTypedNil(t *testing.T) {
+	mockT := new(mockT)
+	d := NewWithOutput(mockT, mockT)
+	f, err := d.Func(func(s []int) bool {
+		return s != nil && len(s) < 4
+	})
+	assert.NoError(t, err, "no error calling Func()")
+	r := NewRecorder(d)
+	var s []int
+	r.Passes(
+		s,
+		f,
+		"len(s) < 4",
+	)
+	mockT.AssertCalled(t, "Fail")
+	require.Len(t, r.record, 1, "one state was recorded")
+	assert.Len(t, r.record[0].output, 1, "record has state with one output item")
+	assert.Equal(
+		t,
+		&result{
+			actual: &value{value: s, desc: "[]int"},
+			expect: nil,
+			op:     "func()",
+			pass:   false,
+			path: []Path{
+				{
+					data:   "[]int",
+					callee: "Func()",
+					caller: "detest.(*DetestRecorder).Passes",
+				},
+			},
+			where:       inValue,
+			description: "",
 		},
 		r.record[0].output[0].result,
 		"got the expected result",
