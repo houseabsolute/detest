@@ -1,4 +1,4 @@
-## 0.0.3
+## 0.0.3  2021-03-26
 
 * Fixed a number of bugs with the handling of `nil` values. If you called
   `d.Is(nil, d.Map(...))` you'd get a panic instead of a failure. The same
