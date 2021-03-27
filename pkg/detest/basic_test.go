@@ -28,7 +28,7 @@ func TestIs(t *testing.T) {
 		mT.AssertCalled(t, "Fail")
 	})
 
-	t.Run("Equivalent values do not compare as true", func(t *testing.T) {
+	t.Run("Equivalent values do not compare as equal", func(t *testing.T) {
 		mT := new(mockT)
 		d := NewWithOutput(mT, mT)
 		d.Is(int32(1), int64(2), "int32(1) == int64(2)")
@@ -56,6 +56,38 @@ func TestIs(t *testing.T) {
 		d.Is(nil, nil, "nil == nil")
 		mT.AssertNotCalled(t, "Fail")
 		mT.AssertCalled(t, "WriteString", "Assertion ok: nil == nil\n")
+	})
+}
+
+func TestIsNot(t *testing.T) {
+	t.Run("Passing test", func(t *testing.T) {
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
+		d.IsNot(1, 42, "1 != 42")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: 1 != 42\n")
+	})
+
+	t.Run("Failing test", func(t *testing.T) {
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
+		d.IsNot(1, 1, "1 != 1")
+		mT.AssertCalled(t, "Fail")
+	})
+
+	t.Run("Equivalent values do not compare as equal", func(t *testing.T) {
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
+		d.IsNot(int32(1), int64(2), "int32(1) != int64(2)")
+		mT.AssertNotCalled(t, "Fail")
+		mT.AssertCalled(t, "WriteString", "Assertion ok: int32(1) != int64(2)\n")
+	})
+
+	t.Run("Can handle nil", func(t *testing.T) {
+		mT := new(mockT)
+		d := NewWithOutput(mT, mT)
+		d.IsNot(nil, nil, "nil != nil")
+		mT.AssertCalled(t, "Fail")
 	})
 }
 
@@ -95,6 +127,20 @@ func TestIsNilTypeHandling(t *testing.T) {
 			mT.AssertCalled(t, "WriteString", "Assertion ok: nil == uninit\n")
 		})
 
+		t.Run(fmt.Sprintf("IsNot(%s == nil)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+
+			d.IsNot(v, nil, "uninit != nil")
+			mT.AssertCalled(t, "Fail")
+		})
+		t.Run(fmt.Sprintf("IsNot(nil == %s)", desc), func(t *testing.T) {
+			mT := new(mockT)
+			d := NewWithOutput(mT, mT)
+			d.IsNot(nil, v, "nil != uninit")
+			mT.AssertCalled(t, "Fail")
+		})
+
 		t.Run(fmt.Sprintf("ValueIs(%s == nil)", desc), func(t *testing.T) {
 			mT := new(mockT)
 			d := NewWithOutput(mT, mT)
@@ -120,13 +166,19 @@ func TestIsNilTypeHandling(t *testing.T) {
 		for _, v2 := range []interface{}{sl, ma, f, p, up, c} {
 			desc2 := describe(v2)
 			if desc != desc2 {
-				t.Run(fmt.Sprintf("Is(%s != %s)", desc, desc2), func(t *testing.T) {
+				t.Run(fmt.Sprintf("Is(%s == %s)", desc, desc2), func(t *testing.T) {
 					mT := new(mockT)
 					d := NewWithOutput(mT, mT)
 					d.Is(v, v2, "nil == uninit")
 					mT.AssertCalled(t, "Fail")
 				})
-				t.Run(fmt.Sprintf("ValueIs(%s != %s)", desc, desc2), func(t *testing.T) {
+				t.Run(fmt.Sprintf("IsNot(%s == %s)", desc, desc2), func(t *testing.T) {
+					mT := new(mockT)
+					d := NewWithOutput(mT, mT)
+					d.IsNot(v, v2, "nil != uninit")
+					mT.AssertNotCalled(t, "Fail")
+				})
+				t.Run(fmt.Sprintf("ValueIs(%s == %s)", desc, desc2), func(t *testing.T) {
 					mT := new(mockT)
 					d := NewWithOutput(mT, mT)
 					d.ValueIs(v, v2, "nil == uninit")

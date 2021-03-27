@@ -9,7 +9,8 @@ import (
 	"strconv"
 )
 
-// ExactEqualityComparer implements exact comparison of two values.
+// ExactEqualityComparer implements exact comparison of two values, checking
+// that they're equal.
 type ExactEqualityComparer struct {
 	expect interface{}
 }
@@ -50,6 +51,22 @@ func (d *D) Passes(actual interface{}, expect Comparer, args ...interface{}) boo
 
 	expect.Compare(d)
 	return d.ok(argsToName(args, "unnamed d.Passes call"))
+}
+
+// IsNot tests that two variables are not exactly equal. The first variable is
+// the actual variable and the second is what is expected. The `expect` must
+// be a literal value.
+//
+// The final arguments follow the same rules as `d.Is`.
+//
+// Under the hood this is implemented with the ExactInequalityComparer.
+func (d *D) IsNot(actual, expect interface{}, args ...interface{}) bool {
+	d.ResetState()
+	d.PushActual(actual)
+	defer d.PopActual()
+
+	d.NotEqual(expect).Compare(d)
+	return d.ok(argsToName(args, "unnamed d.IsNot call"))
 }
 
 // Require takes a boolean and calls t.Fatal if it's false. The typical use is
@@ -104,6 +121,49 @@ func (eec ExactEqualityComparer) Compare(d *D) {
 		}
 	} else {
 		result.pass = nilValuesAreEqual(actual, expect)
+		if result.pass {
+			result.where = inType
+		}
+	}
+
+	d.AddResult(result)
+}
+
+// ExactInequalityComparer implements exact comparison of two values, checking
+// that they're not equal.
+type ExactInequalityComparer struct {
+	expect interface{}
+}
+
+// NotEqual takes an expected literal value and returns an
+// ExactInequalityComparer for later use.
+func (d *D) NotEqual(expect interface{}) ExactInequalityComparer {
+	return ExactInequalityComparer{expect}
+}
+
+// Compare compares the value in d.Actual() to the expected value passed to
+// Equal().
+func (eic ExactInequalityComparer) Compare(d *D) {
+	actual := d.Actual()
+	actualType := reflect.TypeOf(actual)
+	d.PushPath(d.NewPath(describeType(actualType), 1, "detest.(*D).NotEqual"))
+	defer d.PopPath()
+
+	expect := eic.expect
+	result := result{
+		actual: newValue(actual),
+		expect: newValue(expect),
+		op:     "==",
+	}
+
+	expectType := reflect.TypeOf(expect)
+	if actualType == expectType {
+		result.pass = !exactCompare(actual, expect)
+		if !result.pass {
+			result.where = inValue
+		}
+	} else {
+		result.pass = !nilValuesAreEqual(actual, expect)
 		if result.pass {
 			result.where = inType
 		}

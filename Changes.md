@@ -1,5 +1,6 @@
 ## 0.0.6  2021-03-27
 
+* Added a `d.IsNot` assertion.
 * Clarified that `d.ValueIs` only accepts literal values as its second
   argument, not a `Comparer`.
 
