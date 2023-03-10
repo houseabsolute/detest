@@ -1,4 +1,4 @@
-## 0.0.7
+## 0.0.7 2023-03-10
 
 - Tables are now limited to the width of the terminal. Longer rows will be wrapped.
 
