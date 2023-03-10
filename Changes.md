@@ -1,3 +1,8 @@
+## 0.0.7
+
+* Tables are now limited to the width of the terminal. Longer rows will be wrapped.
+
+
 ## 0.0.6  2021-03-27
 
 * Added a `d.IsNot` assertion.

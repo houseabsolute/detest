@@ -9,6 +9,7 @@ import (
 func tableWithTitle(title string, s ansi.Scheme) table.Writer {
 	tw := table.NewWriter()
 	tw.SetTitle(s.Strong(title))
+	tw.SetAllowedRowLength(termWidth())
 	st := table.StyleDefault
 	st.Box = table.StyleBoxLight
 	st.Format.Header = text.FormatDefault
