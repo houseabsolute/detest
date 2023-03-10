@@ -2,7 +2,7 @@
 
 status=0
 
-exe=$( which golangci-lint ) 
+exe=$( which golangci-lint )
 if [ -z "$exe" ]; then
     exe="./bin/golangci-lint"
 fi

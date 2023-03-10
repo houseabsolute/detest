@@ -1,21 +1,15 @@
 linters:
   enable:
-    - deadcode
     - dupl
     - errcheck
     - goimports
-    - golint
     - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
     - unconvert
     - unused
-    - varcheck
-  disable:
-    - gochecknoglobals
 
 issues:
   exclude:
@@ -26,7 +20,7 @@ issues:
 
     # golint: False positive when tests are defined in package 'test'
     - func name will be used as test\.Test.* by other packages, and that stutters; consider calling this
-                                    
+
     # govet: Common false positives
-    - (possible misuse of unsafe.Pointer|should have signature)                                    
+    - (possible misuse of unsafe.Pointer|should have signature)
   exclude-use-default: false

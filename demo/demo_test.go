@@ -1,4 +1,5 @@
-//+build demo
+//go:build demo
+// +build demo
 
 // Run this with `go test -tags demo -v ./demo/`
 

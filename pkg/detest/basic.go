@@ -72,17 +72,17 @@ func (d *D) IsNot(actual, expect interface{}, args ...interface{}) bool {
 // Require takes a boolean and calls t.Fatal if it's false. The typical use is
 // to write something like:
 //
-//     d.Require(
-//         d.Is(...),
-//         "got expected test case data",
-//     )
+//	d.Require(
+//	    d.Is(...),
+//	    "got expected test case data",
+//	)
 //
 // or ...
 //
-//     d.Require(
-//         d.Passes(...)),
-//         "got array with 3 or 4 elements",
-//     )
+//	d.Require(
+//	    d.Passes(...)),
+//	    "got array with 3 or 4 elements",
+//	)
 //
 // The final arguments follow the same rules as `d.Is`.
 func (d *D) Require(ok bool, args ...interface{}) {
